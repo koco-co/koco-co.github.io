@@ -331,6 +331,7 @@ svg.social_icon {
     margin: 3% auto;
     text-align: center;
 }
+
 .aspect-ratio iframe {
     position: absolute;
     width: 100%;
@@ -339,8 +340,10 @@ svg.social_icon {
     top: 0;
 }
 
-/* 文章卡片中的发布信息（时间+分类）文字颜色改为蓝色 */
-.recent-post-item .post-meta time,
-.recent-post-item .post-meta .post-meta-categories {
-    color: #409EFF !important; /* 这是Butterfly主题常用的蓝色，也可以替换为其他蓝色值，比如#007bff */
+/* 只修改首页文章卡片中的“发表于 2026-01-10 | Blog”颜色 */
+#recent-posts .article-meta-wrap .post-meta-date,
+#recent-posts .article-meta-wrap .article-meta,
+#recent-posts .article-meta-wrap .article-meta__categories {
+    color: #498ef5 !important;
 }
+
