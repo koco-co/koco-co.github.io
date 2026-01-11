@@ -83,13 +83,13 @@ function showWelcome() {
     /* ===== 时间问候 ===== */
     const hour = new Date().getHours();
     let timeChange =
-        hour >= 5 && hour < 11 ? '<span>上午好</span>，愿你今天一切顺利。' :
-            hour < 13 ? '<span>中午好</span>，记得按时吃饭。' :
-                hour < 15 ? '<span>下午好</span>，不妨小憩片刻。' :
-                    hour < 16 ? '<span>三点多啦</span>，喝点下午茶吧。' :
-                        hour < 19 ? '<span>傍晚好</span>，愿你收获满满。' :
-                            hour < 24 ? '<span>晚上好</span>，放松一下吧。' :
-                                '夜深了，记得早点休息。';
+        hour >= 5 && hour < 11 ? '<span>上午好</span>，愿你今天一切顺利~~~' :
+            hour < 13 ? '<span>中午好</span>，记得按时吃饭哦~~~' :
+                hour < 15 ? '<span>下午好</span>，不妨小憩片刻~~~' :
+                    hour < 16 ? '<span>三点多啦</span>，喝点下午茶吧~~~' :
+                        hour < 19 ? '<span>傍晚好</span>，愿你收获满满~~~' :
+                            hour < 24 ? '<span>晚上好</span>，放松一下吧~~~' :
+                                '夜深了，记得早点休息~~~';
 
     try {
         /* ===== 有 IP 信息（增强展示） ===== */
