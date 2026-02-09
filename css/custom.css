@@ -26,15 +26,13 @@
 }
 
 /* 侧边栏个人信息卡片动态渐变色 */
-#aside-content > .card-widget.card-info {
-    background: linear-gradient(
-            -45deg,
+#aside-content>.card-widget.card-info {
+    background: linear-gradient(-45deg,
             #e8d8b9,
             #eccec5,
             #a3e9eb,
             #bdbdf0,
-            #eec1ea
-    );
+            #eec1ea);
     box-shadow: 0 0 5px rgb(66, 68, 68);
     position: relative;
     background-size: 400% 400%;
@@ -47,9 +45,11 @@
     0% {
         background-position: 0 50%;
     }
+
     50% {
         background-position: 100% 50%;
     }
+
     100% {
         background-position: 0 50%;
     }
@@ -59,9 +59,11 @@
     0% {
         background-position: 0 50%;
     }
+
     50% {
         background-position: 100% 50%;
     }
+
     100% {
         background-position: 0 50%;
     }
@@ -71,21 +73,23 @@
     0% {
         background-position: 0 50%;
     }
+
     50% {
         background-position: 100% 50%;
     }
+
     100% {
         background-position: 0 50%;
     }
 }
 
 /* 黑夜模式适配 */
-[data-theme="dark"] #aside-content > .card-widget.card-info {
+[data-theme="dark"] #aside-content>.card-widget.card-info {
     background: #191919ee;
 }
 
 /* 个人信息Follow me按钮 */
-#aside-content > .card-widget.card-info > #card-info-btn {
+#aside-content>.card-widget.card-info>#card-info-btn {
     background-color: #3eb8be;
     border-radius: 8px;
 }
@@ -99,7 +103,7 @@
 }
 
 /* 首页文章卡片 */
-#recent-posts > .recent-post-item {
+#recent-posts>.recent-post-item {
     background: var(--trans-light);
     backdrop-filter: var(--backdrop-filter);
     border-radius: 25px;
@@ -135,7 +139,7 @@ div#archive {
 }
 
 /* 夜间模式遮罩 */
-[data-theme="dark"] #recent-posts > .recent-post-item,
+[data-theme="dark"] #recent-posts>.recent-post-item,
 [data-theme="dark"] #aside-content .card-widget,
 [data-theme="dark"] div#post,
 [data-theme="dark"] div#archive,
@@ -200,30 +204,39 @@ div#archive {
     0% {
         text-shadow: #5636ed 0 0 15px;
     }
+
     12.5% {
         text-shadow: #11ee5e 0 0 15px;
     }
+
     25% {
         text-shadow: #f14747 0 0 15px;
     }
+
     37.5% {
         text-shadow: #f1a247 0 0 15px;
     }
+
     50% {
         text-shadow: #f1ee47 0 0 15px;
     }
+
     50% {
         text-shadow: #b347f1 0 0 15px;
     }
+
     62.5% {
         text-shadow: #002afa 0 0 15px;
     }
+
     75% {
         text-shadow: #ed709b 0 0 15px;
     }
+
     87.5% {
         text-shadow: #39c5bb 0 0 15px;
     }
+
     100% {
         text-shadow: #5636ed 0 0 15px;
     }
@@ -233,30 +246,39 @@ div#archive {
     0% {
         text-shadow: #5636ed 0 0 10px;
     }
+
     12.5% {
         text-shadow: #11ee5e 0 0 10px;
     }
+
     25% {
         text-shadow: #f14747 0 0 10px;
     }
+
     37.5% {
         text-shadow: #f1a247 0 0 10px;
     }
+
     50% {
         text-shadow: #f1ee47 0 0 10px;
     }
+
     50% {
         text-shadow: #b347f1 0 0 10px;
     }
+
     62.5% {
         text-shadow: #002afa 0 0 10px;
     }
+
     75% {
         text-shadow: #ed709b 0 0 10px;
     }
+
     87.5% {
         text-shadow: #39c5bb 0 0 10px;
     }
+
     100% {
         text-shadow: #5636ed 0 0 10px;
     }
@@ -266,30 +288,39 @@ div#archive {
     0% {
         text-shadow: #5636ed 0 0 5px;
     }
+
     12.5% {
         text-shadow: #11ee5e 0 0 5px;
     }
+
     25% {
         text-shadow: #f14747 0 0 5px;
     }
+
     37.5% {
         text-shadow: #f1a247 0 0 15px;
     }
+
     50% {
         text-shadow: #f1ee47 0 0 5px;
     }
+
     50% {
         text-shadow: #b347f1 0 0 5px;
     }
+
     62.5% {
         text-shadow: #002afa 0 0 5px;
     }
+
     75% {
         text-shadow: #ed709b 0 0 5px;
     }
+
     87.5% {
         text-shadow: #39c5bb 0 0 5px;
     }
+
     100% {
         text-shadow: #5636ed 0 0 5px;
     }
@@ -349,7 +380,7 @@ svg.social_icon {
 
 
 /* 雪花特效 */
-[data-theme="light"] #snow{
+[data-theme="light"] #snow {
     display: block;
     position: fixed;
     left: 0;
@@ -361,9 +392,362 @@ svg.social_icon {
 }
 
 /* 雪花黑夜模式不显示 */
-[data-theme="dark"] #snow{
+[data-theme="dark"] #snow {
     display: none;
 }
 
 
-/* ===== 标题锚点改为 inline 左图标样式 ===== */
+/* ===== Link 卡片美化样式 ===== */
+
+/* 父容器 - 增加垂直间距 */
+#article-container .tag.link {
+    display: block !important;
+    text-align: left !important;
+    margin: 16px 0 !important;
+    /* 增加上下间距 */
+    width: 100%;
+}
+
+/* 基础样式优化 - 现代化卡片风格 */
+#article-container .tag.link a.link-card {
+    background: rgba(255, 255, 255, 0.8) !important;
+    /* 浅色背景 */
+    color: #333 !important;
+    border-radius: 12px !important;
+    padding: 12px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+    transition: all 0.3s ease !important;
+    position: relative !important;
+    overflow: hidden !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    min-height: 80px !important;
+    width: 100% !important;
+    /* 全宽 */
+    text-decoration: none !important;
+    cursor: pointer !important;
+    margin: 0 !important;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* 悬停效果 */
+#article-container .tag.link a.link-card:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+    background: #fff !important;
+    border-color: var(--btn-bg, #49b1f5);
+}
+
+/* 左侧图标容器 */
+#article-container .tag.link a.link-card div.left {
+    background: transparent !important;
+    margin-right: 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    width: 48px !important;
+    height: 48px !important;
+}
+
+#article-container .tag.link a.link-card div.left img {
+    border-radius: 8px !important;
+    width: 48px !important;
+    height: 48px !important;
+    object-fit: cover !important;
+    display: block;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* 右侧文本容器 */
+#article-container .tag.link a.link-card div.right {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: flex-start !important;
+    flex: 1 !important;
+    overflow: hidden !important;
+    text-align: left !important;
+}
+
+#article-container .tag.link a.link-card p {
+    margin: 0 !important;
+    width: 100%;
+}
+
+#article-container .tag.link a.link-card p.text {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    color: #333 !important;
+    margin-bottom: 4px !important;
+    line-height: 1.4;
+}
+
+#article-container .tag.link a.link-card p.url {
+    font-size: 13px !important;
+    color: #888 !important;
+    font-weight: 400 !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.4;
+}
+
+/* 外部链接图标 */
+#article-container .tag.link a.link-card::after {
+    content: '\f08e';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0;
+    transition: all 0.3s ease;
+    font-size: 16px;
+    color: #ccc;
+}
+
+#article-container .tag.link a.link-card:hover::after {
+    opacity: 1;
+    right: 15px;
+    color: var(--btn-bg, #49b1f5);
+}
+
+/* 夜间模式适配 */
+[data-theme="dark"] #article-container .tag.link a.link-card {
+    background: rgba(40, 40, 40, 0.8) !important;
+    color: #eee !important;
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] #article-container .tag.link a.link-card:hover {
+    background: rgba(50, 50, 50, 0.95) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="dark"] #article-container .tag.link a.link-card p.text {
+    color: #eee !important;
+}
+
+[data-theme="dark"] #article-container .tag.link a.link-card p.url {
+    color: #aaa !important;
+}
+
+
+/* ===== Btn 按钮美化样式 ===== */
+
+.btn-beautify {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 20px !important;
+    margin: 8px 4px !important;
+    border-radius: 50px !important;
+    /* 胶囊圆角 */
+    text-decoration: none !important;
+    font-weight: 600 !important;
+    font-size: 15px !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1) !important;
+    line-height: 1.5 !important;
+    opacity: 1 !important;
+    /* 修复透明度问题 */
+}
+
+/* 修复文字颜色 */
+.btn-beautify,
+.btn-beautify span,
+.btn-beautify i {
+    color: #fff !important;
+}
+
+.btn-beautify i {
+    margin-right: 6px !important;
+}
+
+/* 悬停效果 */
+.btn-beautify:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* 颜色变体 - 实色背景 */
+.btn-beautify.blue {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
+}
+
+.btn-beautify.green {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%) !important;
+}
+
+.btn-beautify.red {
+    background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%) !important;
+}
+
+.btn-beautify.orange {
+    background: linear-gradient(135deg, #f6d365 0%, #fda085 100%) !important;
+}
+
+.btn-beautify.purple {
+    background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%) !important;
+}
+
+.btn-beautify.sky {
+    background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%) !important;
+}
+
+.btn-beautify.pink {
+    background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%) !important;
+}
+
+/* 默认样式 */
+.btn-beautify.regular {
+    background: #f0f0f0 !important;
+    color: #333 !important;
+}
+
+.btn-beautify.regular:hover {
+    background: #e0e0e0 !important;
+}
+
+.btn-beautify.regular span,
+.btn-beautify.regular i {
+    color: #333 !important;
+}
+
+/* 较大尺寸 */
+.btn-beautify.larger {
+    padding: 10px 24px !important;
+    font-size: 16px !important;
+}
+
+
+/* ===== Ghcard GitHub 卡片样式修复 ===== */
+
+.ghcard {
+    display: block !important;
+    margin: 16px auto !important;
+    text-align: center !important;
+    max-width: 450px !important;
+    width: 100% !important;
+    border-radius: 10px !important;
+    overflow: hidden !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+    transition: transform 0.3s ease !important;
+    background: transparent;
+    /* 为了适配主题色，保持透明或者设为白色 */
+}
+
+/* 强制图片显示 */
+.ghcard img {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    border-radius: 10px !important;
+    margin: 0 !important;
+    /* 移除可能导致不显示的 opacity/visibility 设置 */
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.ghcard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* 夜间模式适配 */
+[data-theme="dark"] .ghcard {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+
+/* ===== 标题锚点优化 - 左侧独立显示 + 橙蓝过渡动画 ===== */
+
+/* 标题添加左侧 padding 为链接图标预留空间 */
+#article-container h1,
+#article-container h2,
+#article-container h3,
+#article-container h4,
+#article-container h5,
+#article-container h6 {
+    position: relative !important;
+    padding-left: 28px !important;
+    /* 为左侧链接图标预留空间，避免图标超出容器 */
+}
+
+/* 锚点链接 - 重置 float 和位置 */
+#article-container a.headerlink {
+    float: none !important;
+    position: absolute !important;
+    left: 0 !important;
+    /* 改为 0，图标在标题左侧 padding 区域内 */
+    top: 11px !important;
+    /* 精确调整垂直位置，使图标中心线与标题文字中心线对齐 */
+    display: inline-block !important;
+    width: 20px !important;
+    height: 20px !important;
+    text-decoration: none !important;
+}
+
+/* 锚点图标 - 使用 ::after 伪元素（Butterfly 使用 ::after） */
+#article-container a.headerlink::after {
+    content: '\f0c1' !important;
+    /* Font Awesome Link Icon */
+    font-family: 'Font Awesome 6 Free', 'Font Awesome 7 Free', 'Font Awesome Free', 'Font Awesome 5 Free' !important;
+    font-weight: 900 !important;
+    opacity: 1 !important;
+    /* 始终可见，覆盖主题默认的 opacity: 0 */
+    color: #ff6b35 !important;
+    /* 更鲜艳的橙色，增强可见性 */
+    font-size: 1em !important;
+    /* 增大图标尺寸 */
+    line-height: 1 !important;
+    transition: all 0.3s ease !important;
+    /* 平滑过渡动画 */
+    text-decoration: none !important;
+    border: none !important;
+    display: inline-block !important;
+    /* 确保 display 正确 */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* 鼠标悬停时 - 过渡到蓝色并轻微放大 */
+#article-container h1:hover .headerlink::after,
+#article-container h2:hover .headerlink::after,
+#article-container h3:hover .headerlink::after,
+#article-container h4:hover .headerlink::after,
+#article-container h5:hover .headerlink::after,
+#article-container h6:hover .headerlink::after,
+#article-container a.headerlink:hover::after {
+    color: #1e90ff !important;
+    /* 亮蓝色 */
+    transform: scale(1.2) !important;
+    /* 轻微放大效果 */
+}
+
+
+/* 移动端适配：取消左侧padding，图标放右边或隐藏 */
+@media screen and (max-width: 768px) {
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        padding-left: 0 !important;
+    }
+
+    .headerlink {
+        left: auto !important;
+        right: 0 !important;
+        position: absolute !important;
+        color: #eee !important;
+        opacity: 0 !important;
+        /* 移动端默认隐藏，保持页面整洁 */
+    }
+}
