@@ -1,0 +1,884 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Claude文档(一) Claude Code 安装配置 | Sisyphus X の 个人空间</title><meta name="author" content="Sisyphus X"><meta name="copyright" content="Sisyphus X"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="ffffff"><meta name="description" content="Claude Code 是 Anthropic 推出的终端驻留式 AI 编程代理工具, 能够完整理解代码库上下文, 通过自然语言指令完成代码阅读、生成、修改、git 操作等任务。本文详细介绍其安装配置、认证方式及国内用户接入 GLM-4.7 的实践方案。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Claude文档(一) Claude Code 安装配置">
+<meta property="og:url" content="https://koco-co.github.io/posts/8982d5cb/index.html">
+<meta property="og:site_name" content="Sisyphus X の 个人空间">
+<meta property="og:description" content="Claude Code 是 Anthropic 推出的终端驻留式 AI 编程代理工具, 能够完整理解代码库上下文, 通过自然语言指令完成代码阅读、生成、修改、git 操作等任务。本文详细介绍其安装配置、认证方式及国内用户接入 GLM-4.7 的实践方案。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/koco-co/picgo-images/picgo-images/claudecode-install.png">
+<meta property="article:published_time" content="2026-02-05T07:07:36.000Z">
+<meta property="article:modified_time" content="2026-02-10T13:33:44.608Z">
+<meta property="article:author" content="Sisyphus X">
+<meta property="article:tag" content="Claude-Code">
+<meta property="article:tag" content="GLM-4.7">
+<meta property="article:tag" content="Terminal">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/koco-co/picgo-images/picgo-images/claudecode-install.png"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Claude文档(一) Claude Code 安装配置",
+  "url": "https://koco-co.github.io/posts/8982d5cb/",
+  "image": "https://cdn.jsdelivr.net/gh/koco-co/picgo-images/picgo-images/claudecode-install.png",
+  "datePublished": "2026-02-05T07:07:36.000Z",
+  "dateModified": "2026-02-10T13:33:44.608Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Sisyphus X",
+      "url": "https://koco-co.github.io"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.ico"><link rel="canonical" href="https://koco-co.github.io/posts/8982d5cb/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css?v=5.5.3"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.1.0/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!true && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', 'ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const mediaQueryDark = window.matchMedia('(prefers-color-scheme: dark)')
+          const mediaQueryLight = window.matchMedia('(prefers-color-scheme: light)')
+
+          if (theme === undefined) {
+            if (mediaQueryLight.matches) activateLightMode()
+            else if (mediaQueryDark.matches) activateDarkMode()
+            else {
+              const hour = new Date().getHours()
+              const isNight = hour <= 10 || hour >= 22
+              isNight ? activateDarkMode() : activateLightMode()
+            }
+            mediaQueryDark.addEventListener('change', () => {
+              if (saveToLocal.get('theme') === undefined) {
+                e.matches ? activateDarkMode() : activateLightMode()
+              }
+            })
+          } else {
+            theme === 'light' ? activateLightMode() : activateDarkMode()
+          }
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":true,"pagination":{"enable":true,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":300,"highlightFullpage":false,"highlightMacStyle":true},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.12.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: true,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Claude文档(一) Claude Code 安装配置',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/custom.css" media="defer" onload="this.media='all'"><link rel="stylesheet" href="/css/universe.css"><link rel="stylesheet" href="/css/page-archive-categories-tags.css" media="defer" onload="this.media='all'"><link rel="stylesheet" href="/css/post-tags.css" media="defer" onload="this.media='all'"><link rel="stylesheet" href="//at.alicdn.com/t/c/font_5107453_kyxe7zjyy0h.css" media="defer" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/l-lin/font-awesome-animation/dist/font-awesome-animation.min.css"  media="defer" onload="this.media='all'"><!-- hexo injector head_end start --><link rel="stylesheet" href="https://npm.elemecdn.com/hexo-butterfly-tag-plugins-plus@latest/lib/assets/font-awesome-animation.min.css" media="defer" onload="this.media='all'"><link rel="stylesheet" href="https://npm.elemecdn.com/hexo-butterfly-tag-plugins-plus@latest/lib/tag_plugins.css" media="defer" onload="this.media='all'"><script src="https://npm.elemecdn.com/hexo-butterfly-tag-plugins-plus@latest/lib/assets/carousel-touch.js"></script><!-- hexo injector head_end end --><meta name="generator" content="Hexo 8.1.1"></head><body><div class="bg-animation" id="web_bg" style="background-image: url(/img/background.png);"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/avatar.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">11</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">35</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">8</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><span class="site-page group hide"><i class="fa-fw fas fa-book"></i><span> 文章</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/video/"><i class="fa-fw fas fa-video"></i><span> 视频</span></a></div><div class="menus_item"><a class="site-page" href="/wallpaper/"><i class="fa-fw fas fa-image"></i><span> 照片</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://cdn.jsdelivr.net/gh/koco-co/picgo-images/picgo-images/claudecode-install.png);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Sisyphus X の 个人空间</span></a><a class="nav-page-title" href="/"><span class="site-name">Claude文档(一) Claude Code 安装配置</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><span class="site-page group hide"><i class="fa-fw fas fa-book"></i><span> 文章</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/video/"><i class="fa-fw fas fa-video"></i><span> 视频</span></a></div><div class="menus_item"><a class="site-page" href="/wallpaper/"><i class="fa-fw fas fa-image"></i><span> 照片</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Claude文档(一) Claude Code 安装配置<a class="post-edit-link" href="https://github.com/koco-co/koco-co.github.io/edit/main/source/_posts/Claude文档(一)ClaudeCode.md" title="编辑" target="_blank"><i class="fas fa-pencil-alt"></i></a></h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-02-05T07:07:36.000Z" title="发表于 2026-02-05 15:07:36">2026-02-05</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-10T13:33:44.608Z" title="更新于 2026-02-10 21:33:44">2026-02-10</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/AI%E5%BC%80%E5%8F%91/">AI开发</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/AI%E5%BC%80%E5%8F%91/%E5%BC%80%E5%8F%91%E5%B7%A5%E5%85%B7/">开发工具</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">4.3k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>16分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>Claude Code 是 Anthropic 推出的终端驻留式 AI 编程代理工具, 能够完整理解代码库上下文, 通过自然语言指令完成代码阅读、生成、修改、git 操作等任务。</p>
+<a class="btn-beautify purple" target="_blank" rel="noopener" href="https://code.claude.com" title="Claude Code 官网"><i class="fa-solid fa-globe"></i><span>Claude Code 官网</span></a>
+<h3 id="核心特性"><a href="#核心特性" class="headerlink" title="核心特性"></a>核心特性</h3><ul>
+<li><strong>智能代码库理解</strong>: 使用 agent 搜索理解整个代码库结构, 无需手动选择上下文文件</li>
+<li><strong>多文件协作</strong>: 能够在多个文件间协调修改, 保持代码一致性</li>
+<li><strong>原生工具集成</strong>: 支持所有 CLI 工具, 包括 Git、包管理器、构建系统等</li>
+<li><strong>安全可控</strong>: 修改文件前始终请求权限, 不会意外破坏代码</li>
+<li><strong>多平台支持</strong>: 可在终端、VS Code、JetBrains IDEs 和浏览器中使用</li>
+</ul>
+<h3 id="适用场景"><a href="#适用场景" class="headerlink" title="适用场景"></a>适用场景</h3><ul>
+<li>中大型项目的重构和特性开发</li>
+<li>理解遗留代码和复杂业务逻辑</li>
+<li>自动化测试生成和 bug 修复</li>
+<li>跨文件代码迁移和架构调整</li>
+<li>文档生成和代码审查</li>
+</ul>
+<div class="note success flat"><p>✅ <strong>效率提升</strong>: 相比传统代码补全工具, Claude Code 更像一个可执行多步计划的”同事”, 能够将编码效率提升 2-4 倍。</p>
+</div>
+<hr>
+<h2 id="安装配置"><a href="#安装配置" class="headerlink" title="安装配置"></a>安装配置</h2><p>Claude Code 官方推荐使用原生二进制安装方式(npm 方式已标记 deprecated)。</p>
+<h3 id="系统要求"><a href="#系统要求" class="headerlink" title="系统要求"></a>系统要求</h3><ul>
+<li><strong>Node.js</strong>: 18.0 或更高版本</li>
+<li><strong>操作系统</strong>: macOS、Linux(含 WSL2)、Windows</li>
+<li><strong>网络</strong>: 需要访问 Anthropic API 或兼容服务</li>
+</ul>
+<h3 id="安装方法"><a href="#安装方法" class="headerlink" title="安装方法"></a>安装方法</h3><div class="tabs"><div class="nav-tabs"><button type="button" class="tab active"><i class="fab fa-apple"></i>macOS</button><button type="button" class="tab"><i class="fab fa-linux"></i>Ubuntu/Debian/WSL</button><button type="button" class="tab"><i class="fab fa-windows"></i>Windows</button></div><div class="tab-contents"><div class="tab-item-content active"><p><strong>方法一: Homebrew 安装(推荐)</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 确保 brew 已更新</span></span><br><span class="line">brew update</span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装 Claude Code(会自动拉取最新稳定版)</span></span><br><span class="line">brew install --cask claude-code</span><br></pre></td></tr></table></figure>
+<div class="note info flat"><p>💡 Homebrew 会自动配置 PATH 环境变量, 无需手动配置。</p>
+</div>
+
+<p><strong>方法二: 官方安装脚本</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 下载并执行安装脚本(会放置在 /usr/local/bin/claude)</span></span><br><span class="line">curl -fsSL https://claude.ai/install.sh | bash</span><br></pre></td></tr></table></figure>
+<div class="note warning flat"><p>⚠️ 如果使用 nvm 安装 Node.js, 可能会遇到权限问题, 建议使用 Homebrew 方式。</p>
+</div></div><div class="tab-item-content"><p><strong>使用官方安装脚本(推荐)</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 下载并执行安装脚本(会放置在 ~/.local/bin/claude)</span></span><br><span class="line">curl -fsSL https://claude.ai/install.sh | bash</span><br><span class="line"></span><br><span class="line"><span class="comment"># 添加到 PATH(如果尚未添加)</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;export PATH=&quot;$HOME/.local/bin:$PATH&quot;&#x27;</span> &gt;&gt; ~/.bashrc</span><br><span class="line"><span class="built_in">source</span> ~/.bashrc</span><br></pre></td></tr></table></figure>
+<p><strong>使用 Node.js 全局安装(备用方案)</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 确保 Node.js &gt;= 18</span></span><br><span class="line">node --version</span><br><span class="line"></span><br><span class="line"><span class="comment"># 全局安装 Claude Code</span></span><br><span class="line">npm install -g @anthropic-ai/claude-code</span><br></pre></td></tr></table></figure>
+<div class="note info flat"><p>💡 npm 方式需要确保有全局 npm 权限, 避免使用 sudo。</p>
+</div></div><div class="tab-item-content"><p><strong>推荐方案: WSL2 + Ubuntu</strong></p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 在 PowerShell 中安装 WSL2</span></span><br><span class="line">wsl <span class="literal">--install</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装完成后, 在 WSL Ubuntu 中按上述 Linux 方式安装</span></span><br></pre></td></tr></table></figure>
+<p><strong>原生 Windows 支持(实验性)</strong></p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 使用 PowerShell 安装脚本</span></span><br><span class="line"><span class="built_in">irm</span> https://claude.ai/install.ps1 | <span class="built_in">iex</span></span><br></pre></td></tr></table></figure>
+<div class="note warning flat"><p>⚠️ 原生 Windows 支持仍在完善中, 稳定性与生态完整度建议走 WSL。</p>
+</div></div></div><div class="tab-to-top"><button type="button" aria-label="scroll to top"><i class="fas fa-arrow-up"></i></button></div></div>
+<h3 id="验证安装"><a href="#验证安装" class="headerlink" title="验证安装"></a>验证安装</h3><p>安装完成后验证:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">claude --version</span><br><span class="line"><span class="comment"># 应输出版本号, 如 v2.0.14</span></span><br></pre></td></tr></table></figure>
+<p>如果输出了版本号, 说明安装成功。</p>
+<div class="tag link"><a class="link-card" title="Claude Code 安装文档" target="_blank" rel="noopener" href="https://docs.anthropic.com/en/docs/claude-code/overview"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://avatars.githubusercontent.com/u/81847?v=4"/></div><div class="right"><p class="text">Claude Code 安装文档</p><p class="url">https://docs.anthropic.com/en/docs/claude-code/overview</p></div></a></div>
+<h3 id="VS-Code-JetBrains-IDE-扩展"><a href="#VS-Code-JetBrains-IDE-扩展" class="headerlink" title="VS Code / JetBrains IDE 扩展"></a>VS Code / JetBrains IDE 扩展</h3><p>如果需要在 IDE 中使用 Claude Code:</p>
+<div class="tabs"><div class="nav-tabs no-default"></div><div class="tab-contents"></div><div class="tab-to-top"><button type="button" aria-label="scroll to top"><i class="fas fa-arrow-up"></i></button></div></div>
+<div class="note info flat"><p>💡 IDE 扩展提供可视化 diff 对比, 适合需要频繁查看代码变更的场景。</p>
+</div>
+<hr>
+<h2 id="认证配置"><a href="#认证配置" class="headerlink" title="认证配置"></a>认证配置</h2><p>Claude Code 支持三种主要认证模式:</p>
+<div class="tabs"><div class="nav-tabs no-default"></div><div class="tab-contents"></div><div class="tab-to-top"><button type="button" aria-label="scroll to top"><i class="fas fa-arrow-up"></i></button></div></div>
+<h3 id="创建多模型-alias"><a href="#创建多模型-alias" class="headerlink" title="创建多模型 alias"></a>创建多模型 alias</h3><p>建议创建不同模型的 alias, 方便快速切换:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># ~/.bashrc 或 ~/.zshrc</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 官方 Claude(需要代理)</span></span><br><span class="line"><span class="built_in">alias</span> claude-claude=<span class="string">&quot;ANTHROPIC_BASE_URL=https://api.anthropic.com ANTHROPIC_API_KEY=sk-ant-... claude&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 智谱 GLM-4.7</span></span><br><span class="line"><span class="built_in">alias</span> claude-glm=<span class="string">&quot;ANTHROPIC_BASE_URL=https://open.bigmodel.cn/api/anthropic/v1 ANTHROPIC_API_KEY=sk-xxx claude&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># z.ai GLM-4.7</span></span><br><span class="line"><span class="built_in">alias</span> claude-zai=<span class="string">&quot;ANTHROPIC_BASE_URL=https://api.z.ai/v1 ANTHROPIC_API_KEY=sk-xxx claude&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 应用配置</span></span><br><span class="line"><span class="built_in">source</span> ~/.bashrc  <span class="comment"># 或 source ~/.zshrc</span></span><br></pre></td></tr></table></figure>
+<p>使用示例:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 使用官方 Claude</span></span><br><span class="line">claude-claude</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用智谱 GLM-4.7</span></span><br><span class="line">claude-glm</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用 z.ai GLM-4.7</span></span><br><span class="line">claude-zai</span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="模型选择与优化配置"><a href="#模型选择与优化配置" class="headerlink" title="模型选择与优化配置"></a>模型选择与优化配置</h2><h3 id="Claude-Code-模型映射"><a href="#Claude-Code-模型映射" class="headerlink" title="Claude Code 模型映射"></a>Claude Code 模型映射</h3><p>Claude Code 使用三种模型层级:</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>用途</th>
+<th>GLM-4.7 映射</th>
+<th>特点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Haiku</strong></td>
+<td>轻量级任务</td>
+<td>glm-4.5-air</td>
+<td>快速响应, 适合简单查询</td>
+</tr>
+<tr>
+<td><strong>Sonnet</strong></td>
+<td>主要开发工作</td>
+<td>glm-4.7</td>
+<td>平衡性能与速度</td>
+</tr>
+<tr>
+<td><strong>Opus</strong></td>
+<td>复杂推理任务</td>
+<td>glm-4.7</td>
+<td>最强能力, 适合复杂架构设计</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="note info flat"><p>💡 GLM-4.7-long 上下文更稳定, 适合超过 100k token 的巨型代码库分析。</p>
+</div>
+<h3 id="配置-GLM-4-7-模型映射"><a href="#配置-GLM-4-7-模型映射" class="headerlink" title="配置 GLM-4.7 模型映射"></a>配置 GLM-4.7 模型映射</h3><p>修改 <code>~/.claude/settings.json</code>:</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;env&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;ANTHROPIC_DEFAULT_HAIKU_MODEL&quot;</span><span class="punctuation">:</span> <span class="string">&quot;glm-4.5-air&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;ANTHROPIC_DEFAULT_SONNET_MODEL&quot;</span><span class="punctuation">:</span> <span class="string">&quot;glm-4.7&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;ANTHROPIC_DEFAULT_OPUS_MODEL&quot;</span><span class="punctuation">:</span> <span class="string">&quot;glm-4.7&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+<h3 id="推荐配置组合"><a href="#推荐配置组合" class="headerlink" title="推荐配置组合"></a>推荐配置组合</h3><div class="tabs"><div class="nav-tabs no-default"></div><div class="tab-contents"></div><div class="tab-to-top"><button type="button" aria-label="scroll to top"><i class="fas fa-arrow-up"></i></button></div></div>
+<h3 id="验证模型配置"><a href="#验证模型配置" class="headerlink" title="验证模型配置"></a>验证模型配置</h3><p>启动 Claude Code 后, 使用 <code>/status</code> 命令查看当前模型状态:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">claude</span><br><span class="line"><span class="comment"># 在 Claude Code 交互界面中</span></span><br><span class="line">claude &gt; /status</span><br></pre></td></tr></table></figure>
+<p>应显示类似:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Current Model: glm-4.7</span><br><span class="line">Base URL: https://open.bigmodel.cn/api/anthropic/v1</span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="快速开始"><a href="#快速开始" class="headerlink" title="快速开始"></a>快速开始</h2><h3 id="启动-Claude-Code"><a href="#启动-Claude-Code" class="headerlink" title="启动 Claude Code"></a>启动 Claude Code</h3><p>进入任意项目目录, 直接启动:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> ~/projects/my-app</span><br><span class="line">claude</span><br></pre></td></tr></table></figure>
+<p>出现 <code>claude &gt;</code> 提示符即成功。</p>
+<h3 id="首次使用授权"><a href="#首次使用授权" class="headerlink" title="首次使用授权"></a>首次使用授权</h3><p>首次启动时, Claude Code 会请求文件访问权限:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Claude Code wants to access files in /Users/xxx/projects/my-app</span><br><span class="line">[Allow] [Deny]</span><br></pre></td></tr></table></figure>
+<p>选择 <strong>Allow</strong> 以授予访问权限。</p>
+<div class="note warning flat"><p>⚠️ 如果误选了 Deny, 可以在 <code>~/.claude/settings.json</code> 中删除相关路径配置。</p>
+</div>
+<h3 id="基础测试指令"><a href="#基础测试指令" class="headerlink" title="基础测试指令"></a>基础测试指令</h3><p><strong>使用 /ask 指令(不修改文件)</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/ask 当前项目使用什么语言? package.json 和 requirements.txt 里主要依赖是什么?</span><br></pre></td></tr></table></figure>
+<p><strong>使用自然语言指令</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">帮我分析 src/components 目录下所有组件的作用和关系</span><br></pre></td></tr></table></figure>
+<p>正常情况下 5–15 秒内会返回带文件树和关键代码引用的分析。</p>
+<h3 id="查看帮助信息"><a href="#查看帮助信息" class="headerlink" title="查看帮助信息"></a>查看帮助信息</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/help</span><br></pre></td></tr></table></figure>
+<p>会列出所有可用指令和快捷键。</p>
+<hr>
+<h2 id="核心功能使用"><a href="#核心功能使用" class="headerlink" title="核心功能使用"></a>核心功能使用</h2><h3 id="Slash-Commands-必须掌握"><a href="#Slash-Commands-必须掌握" class="headerlink" title="Slash Commands(必须掌握)"></a>Slash Commands(必须掌握)</h3><p>Claude Code 使用 <code>/</code> 开头的 slash command 与纯自然语言两种交互方式。</p>
+<p>常用内置指令:</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>指令</th>
+<th>作用</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/ask</code></td>
+<td>提问(不修改文件)</td>
+<td><code>/ask 这个函数的性能瓶颈可能在哪里?</code></td>
+</tr>
+<tr>
+<td><code>/generate</code></td>
+<td>生成新文件或代码片段</td>
+<td><code>/generate 创建一个用户登录的 RESTful 接口</code></td>
+</tr>
+<tr>
+<td><code>/edit</code></td>
+<td>修改已有文件</td>
+<td><code>/edit 在 auth.js 中添加 JWT 刷新逻辑</code></td>
+</tr>
+<tr>
+<td><code>/run</code></td>
+<td>执行 shell 命令(需确认)</td>
+<td><code>/run npm test</code></td>
+</tr>
+<tr>
+<td><code>/git</code></td>
+<td>git 操作</td>
+<td><code>/git commit -m &quot;feat: add login endpoint&quot;</code></td>
+</tr>
+<tr>
+<td><code>/model</code></td>
+<td>查看&amp;切换当前模型</td>
+<td><code>/model list</code></td>
+</tr>
+<tr>
+<td><code>/status</code></td>
+<td>查看当前状态</td>
+<td><code>/status</code></td>
+</tr>
+<tr>
+<td><code>/clear</code></td>
+<td>清空对话历史</td>
+<td><code>/clear</code></td>
+</tr>
+<tr>
+<td><code>/help</code></td>
+<td>完整指令列表</td>
+<td><code>/help</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="note info flat"><p>💡 <code>/ask</code> 指令适合探索性提问, 不会修改任何文件。</p>
+</div>
+<h3 id="典型使用场景"><a href="#典型使用场景" class="headerlink" title="典型使用场景"></a>典型使用场景</h3><h4 id="1-快速理解陌生项目"><a href="#1-快速理解陌生项目" class="headerlink" title="1. 快速理解陌生项目"></a>1. 快速理解陌生项目</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">给我一份这个仓库的架构概览, 重点标注入口文件和核心模块</span><br></pre></td></tr></table></figure>
+<p>Claude Code 会:</p>
+<ul>
+<li>扫描项目结构</li>
+<li>分析 package.json/requirements.txt</li>
+<li>识别主要模块和依赖关系</li>
+<li>生成架构概览</li>
+</ul>
+<p>e.g.</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">claude &gt; 给我一份这个仓库的架构概览, 重点标注入口文件和核心模块</span><br><span class="line"></span><br><span class="line"><span class="comment"># Claude Code 会分析并输出类似:</span></span><br><span class="line">- 入口文件: src/index.ts</span><br><span class="line">- 核心模块:</span><br><span class="line">  - src/auth/: 认证模块</span><br><span class="line">  - src/api/: API 路由</span><br><span class="line">  - src/utils/: 工具函数</span><br><span class="line">  - src/components/: React 组件</span><br></pre></td></tr></table></figure>
+<h4 id="2-批量生成测试用例"><a href="#2-批量生成测试用例" class="headerlink" title="2. 批量生成测试用例"></a>2. 批量生成测试用例</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">在 __tests__ 目录下为所有 utils/*.ts 文件生成 jest 测试用例, 覆盖率目标 90%</span><br></pre></td></tr></table></figure>
+<p>Claude Code 会:</p>
+<ul>
+<li>读取所有 utils 文件</li>
+<li>分析函数签名和逻辑</li>
+<li>生成完整的测试用例</li>
+<li>确保覆盖率达标</li>
+</ul>
+<p>e.g.</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">claude &gt; 在 __tests__ 目录下为所有 utils/*.ts 文件生成 jest 测试用例</span><br><span class="line"></span><br><span class="line"><span class="comment"># Claude Code 会:</span></span><br><span class="line">1. 分析 src/utils/format.ts, src/utils/validate.ts 等</span><br><span class="line">2. 生成 __tests__/format.test.ts, __tests__/validate.test.ts</span><br><span class="line">3. 包含边界测试、错误处理测试</span><br></pre></td></tr></table></figure>
+<h4 id="3-跨文件重构"><a href="#3-跨文件重构" class="headerlink" title="3. 跨文件重构"></a>3. 跨文件重构</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">把所有 class 组件统一改写为 function component + hooks, 改动尽量原子化, 每个文件单独 commit</span><br></pre></td></tr></table></figure>
+<p>Claude Code 会:</p>
+<ul>
+<li>找到所有 class 组件</li>
+<li>逐个改写为 hooks</li>
+<li>每改完一个文件提交一次</li>
+<li>保持代码风格一致</li>
+</ul>
+<p>e.g.</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">claude &gt; 把所有 class 组件改写为 <span class="keyword">function</span> component + hooks, 每个文件单独 commit</span><br><span class="line"></span><br><span class="line"><span class="comment"># Claude Code 会:</span></span><br><span class="line">1. 搜索所有 class 组件</span><br><span class="line">2. 逐个改写为 hooks</span><br><span class="line">3. 运行 git commit 对每个文件单独提交</span><br></pre></td></tr></table></figure>
+<h4 id="4-自动修复-lint-amp-type-错误"><a href="#4-自动修复-lint-amp-type-错误" class="headerlink" title="4. 自动修复 lint &amp; type 错误"></a>4. 自动修复 lint &amp; type 错误</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">运行 tsc --noEmit 后把所有报错修复掉, 必要时添加类型声明</span><br></pre></td></tr></table></figure>
+<p>Claude Code 会:</p>
+<ul>
+<li>运行 TypeScript 编译器</li>
+<li>分析所有错误</li>
+<li>自动修复或添加类型声明</li>
+<li>验证修复结果</li>
+</ul>
+<p>e.g.</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">claude &gt; 运行 tsc --noEmit 后修复所有类型错误</span><br><span class="line"></span><br><span class="line"><span class="comment"># Claude Code 会:</span></span><br><span class="line">1. 执行 tsc --noEmit</span><br><span class="line">2. 分析错误列表</span><br><span class="line">3. 逐个修复类型错误</span><br><span class="line">4. 再次运行 tsc 验证</span><br></pre></td></tr></table></figure>
+<div class="note warning flat"><p>⚠️ GLM-4.7 在多轮工具调用连续性上稍逊官方 Sonnet 模型, 复杂任务建议在 prompt 里明确写 “step by step, don’t stop until finished”。</p>
+</div>
+<h3 id="使用技巧"><a href="#使用技巧" class="headerlink" title="使用技巧"></a>使用技巧</h3><h4 id="明确指令"><a href="#明确指令" class="headerlink" title="明确指令"></a>明确指令</h4><p>❌ 模糊指令:<br><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">帮我优化一下代码</span><br></pre></td></tr></table></figure></p>
+<p>✅ 明确指令:<br><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">把 src/api/user.ts 中的所有 Promise 链改写为 async/await, 保持错误处理逻辑不变</span><br></pre></td></tr></table></figure></p>
+<h4 id="分步执行"><a href="#分步执行" class="headerlink" title="分步执行"></a>分步执行</h4><p>对于复杂任务, 分步执行效果更好:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># 第一步: 分析问题</span><br><span class="line">/ask 这个项目中的类型错误主要集中在哪些文件?</span><br><span class="line"></span><br><span class="line"># 第二步: 修复问题</span><br><span class="line">修复 src/api/auth.ts 中的所有类型错误, 添加必要的类型声明</span><br><span class="line"></span><br><span class="line"># 第三步: 验证结果</span><br><span class="line">/run npm run type-check</span><br></pre></td></tr></table></figure>
+<h4 id="交互式确认"><a href="#交互式确认" class="headerlink" title="交互式确认"></a>交互式确认</h4><p>Claude Code 在执行危险操作前会请求确认:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">⚠️  Claude Code will delete the following files:</span><br><span class="line">- src/old-component.tsx</span><br><span class="line">- src/old-utils.ts</span><br><span class="line"></span><br><span class="line">Continue? [y/N]</span><br></pre></td></tr></table></figure>
+<div class="note danger flat"><p>🚫 始终仔细查看变更内容, 特别是删除操作。</p>
+</div>
+<hr>
+<h2 id="进阶功能"><a href="#进阶功能" class="headerlink" title="进阶功能"></a>进阶功能</h2><h3 id="MCP-工具扩展"><a href="#MCP-工具扩展" class="headerlink" title="MCP 工具扩展"></a>MCP 工具扩展</h3><p>Claude Code 支持 MCP(Model Context Protocol)服务器扩展能力, 可以增强其功能:</p>
+<h4 id="常用-MCP-服务器"><a href="#常用-MCP-服务器" class="headerlink" title="常用 MCP 服务器"></a>常用 MCP 服务器</h4><p><strong>文件系统 MCP</strong>(深度文件操作)</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 添加文件系统 MCP(常用于大项目索引)</span></span><br><span class="line">claude mcp add filesystem -- npx -y @modelcontextprotocol/server-filesystem .</span><br></pre></td></tr></table></figure>
+<p><strong>浏览器自动化 MCP</strong>(让 Claude 自己查文档)</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 添加 Puppeteer MCP</span></span><br><span class="line">claude mcp add puppeteer -- npx -y @modelcontextprotocol/server-puppeteer</span><br></pre></td></tr></table></figure>
+<p><strong>搜索增强 MCP</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 添加 Brave Search MCP</span></span><br><span class="line">claude mcp add brave-search -- npx -y @modelcontextprotocol/server-brave-search</span><br></pre></td></tr></table></figure>
+<p><strong>GitHub MCP</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 添加 GitHub MCP(集成 GitHub API)</span></span><br><span class="line">claude mcp add github -- npx -y @modelcontextprotocol/server-github</span><br></pre></td></tr></table></figure>
+<div class="note info flat"><p>💡 MCP 服务器需要额外的配置和认证, 参考 <a target="_blank" rel="noopener" href="https://docs.anthropic.com/en/docs/build-with-claude/mcp">MCP 官方文档</a>。</p>
+</div>
+<h4 id="查看-移除-MCP"><a href="#查看-移除-MCP" class="headerlink" title="查看/移除 MCP"></a>查看/移除 MCP</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看已安装的 MCP</span></span><br><span class="line">claude mcp list</span><br><span class="line"></span><br><span class="line"><span class="comment"># 移除 MCP 服务器</span></span><br><span class="line">claude mcp remove &lt;mcp-name&gt;</span><br></pre></td></tr></table></figure>
+<div class="tag link"><a class="link-card" title="MCP 官方文档" target="_blank" rel="noopener" href="https://docs.anthropic.com/en/docs/build-with-claude/mcp"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://avatars.githubusercontent.com/u/182288589?s=200&v=4"/></div><div class="right"><p class="text">MCP 官方文档</p><p class="url">https://docs.anthropic.com/en/docs/build-with-claude/mcp</p></div></a></div>
+<h3 id="自定义配置"><a href="#自定义配置" class="headerlink" title="自定义配置"></a>自定义配置</h3><h4 id="配置文件位置"><a href="#配置文件位置" class="headerlink" title="配置文件位置"></a>配置文件位置</h4><ul>
+<li><strong>全局配置</strong>: <code>~/.claude/settings.json</code></li>
+<li><strong>项目配置</strong>: <code>.claude/settings.json</code></li>
+</ul>
+<h4 id="常用配置项"><a href="#常用配置项" class="headerlink" title="常用配置项"></a>常用配置项</h4><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="comment">// 模型配置</span></span><br><span class="line">  <span class="attr">&quot;env&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;ANTHROPIC_DEFAULT_SONNET_MODEL&quot;</span><span class="punctuation">:</span> <span class="string">&quot;glm-4.7&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;ANTHROPIC_DEFAULT_OPUS_MODEL&quot;</span><span class="punctuation">:</span> <span class="string">&quot;glm-4.7&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;CLAUDE_CODE_MAX_OUTPUT_TOKENS&quot;</span><span class="punctuation">:</span> <span class="number">64000</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC&quot;</span><span class="punctuation">:</span> <span class="number">1</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// 允许的工具</span></span><br><span class="line">  <span class="attr">&quot;allowedTools&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">    <span class="string">&quot;Read&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="string">&quot;Write&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="string">&quot;Edit&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="string">&quot;Bash&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="string">&quot;Git&quot;</span></span><br><span class="line">  <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// 禁用的工具</span></span><br><span class="line">  <span class="attr">&quot;disabledTools&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// 自动确认操作(谨慎使用)</span></span><br><span class="line">  <span class="attr">&quot;dangerouslySkipPermissions&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// 自定义系统提示</span></span><br><span class="line">  <span class="attr">&quot;systemPrompt&quot;</span><span class="punctuation">:</span> <span class="string">&quot;你是一个专业的全栈工程师...&quot;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+<div class="note danger flat"><p>🚫 <code>dangerouslySkipPermissions</code> 会跳过所有权限确认, 仅在完全信任的环境中使用。</p>
+</div>
+<h3 id="环境变量配置"><a href="#环境变量配置" class="headerlink" title="环境变量配置"></a>环境变量配置</h3><p>除了在 <code>~/.claude/settings.json</code> 中配置, 也可以使用环境变量:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># ~/.bashrc 或 ~/.zshrc</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># API 配置</span></span><br><span class="line"><span class="built_in">export</span> ANTHROPIC_BASE_URL=https://open.bigmodel.cn/api/anthropic/v1</span><br><span class="line"><span class="built_in">export</span> ANTHROPIC_API_KEY=sk-xxx...</span><br><span class="line"></span><br><span class="line"><span class="comment"># 模型配置</span></span><br><span class="line"><span class="built_in">export</span> ANTHROPIC_DEFAULT_SONNET_MODEL=glm-4.7</span><br><span class="line"><span class="built_in">export</span> ANTHROPIC_DEFAULT_OPUS_MODEL=glm-4.7</span><br><span class="line"></span><br><span class="line"><span class="comment"># 性能配置</span></span><br><span class="line"><span class="built_in">export</span> CLAUDE_CODE_MAX_OUTPUT_TOKENS=64000</span><br><span class="line"><span class="built_in">export</span> CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1</span><br><span class="line"></span><br><span class="line"><span class="comment"># 代理配置(如需要)</span></span><br><span class="line"><span class="built_in">export</span> HTTP_PROXY=http://127.0.0.1:7890</span><br><span class="line"><span class="built_in">export</span> HTTPS_PROXY=http://127.0.0.1:7890</span><br></pre></td></tr></table></figure>
+<div class="note info flat"><p>💡 环境变量优先级高于 <code>settings.json</code>。</p>
+</div>
+<hr>
+<h2 id="最佳实践"><a href="#最佳实践" class="headerlink" title="最佳实践"></a>最佳实践</h2><h3 id="工作流程"><a href="#工作流程" class="headerlink" title="工作流程"></a>工作流程</h3><h4 id="1-需求分析阶段"><a href="#1-需求分析阶段" class="headerlink" title="1. 需求分析阶段"></a>1. 需求分析阶段</h4><p>使用 <code>/ask</code> 探索问题:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/ask 这个项目的认证流程是如何实现的? 涉及哪些文件?</span><br></pre></td></tr></table></figure>
+<h4 id="2-方案设计阶段"><a href="#2-方案设计阶段" class="headerlink" title="2. 方案设计阶段"></a>2. 方案设计阶段</h4><p>让 Claude Code 提供多个方案:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">给出三种重构数据库查询的方案, 对比优劣和实现难度</span><br></pre></td></tr></table></figure>
+<h4 id="3-实现阶段"><a href="#3-实现阶段" class="headerlink" title="3. 实现阶段"></a>3. 实现阶段</h4><p>使用明确的指令:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">创建 src/utils/db.ts, 实现方案一中的数据库连接池, 使用 TypeORM</span><br></pre></td></tr></table></figure>
+<h4 id="4-测试阶段"><a href="#4-测试阶段" class="headerlink" title="4. 测试阶段"></a>4. 测试阶段</h4><p>自动生成测试:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">为 src/utils/db.ts 生成完整的单元测试, 覆盖所有分支</span><br></pre></td></tr></table></figure>
+<h4 id="5-提交阶段"><a href="#5-提交阶段" class="headerlink" title="5. 提交阶段"></a>5. 提交阶段</h4><p>使用 <code>/git</code> 提交:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">/git add .</span><br><span class="line">/git commit -m &quot;feat: implement database connection pool&quot;</span><br></pre></td></tr></table></figure>
+<h3 id="提示词工程"><a href="#提示词工程" class="headerlink" title="提示词工程"></a>提示词工程</h3><h4 id="好的提示词特征"><a href="#好的提示词特征" class="headerlink" title="好的提示词特征"></a>好的提示词特征</h4><ul>
+<li><strong>具体明确</strong>: 指定文件名、函数名、具体行为</li>
+<li><strong>上下文完整</strong>: 提供必要的背景信息</li>
+<li><strong>约束清晰</strong>: 说明不能做什么</li>
+<li><strong>可验证</strong>: 有明确的验收标准</li>
+</ul>
+<p>e.g. 好的提示词:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">在 src/api/auth.ts 中添加 JWT token 刷新功能:</span><br><span class="line">1. 使用 jsonwebtoken 库</span><br><span class="line">2. 实现 refresh() 函数, 接收旧 token, 返回新 token</span><br><span class="line">3. 添加过期时间检查, 过期返回 401</span><br><span class="line">4. 保持现有的 login() 和 logout() 函数不变</span><br><span class="line">5. 添加类型声明</span><br></pre></td></tr></table></figure>
+<h4 id="不好的提示词特征"><a href="#不好的提示词特征" class="headerlink" title="不好的提示词特征"></a>不好的提示词特征</h4><p>❌ 模糊:<br><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">优化一下认证代码</span><br></pre></td></tr></table></figure></p>
+<p>❌ 缺少上下文:<br><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">添加一个新功能</span><br></pre></td></tr></table></figure></p>
+<p>❌ 约束不清:<br><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">重构这个文件, 但不要改太多</span><br></pre></td></tr></table></figure></p>
+<h3 id="团队协作"><a href="#团队协作" class="headerlink" title="团队协作"></a>团队协作</h3><h4 id="统一配置"><a href="#统一配置" class="headerlink" title="统一配置"></a>统一配置</h4><p>在项目根目录创建 <code>.claude/settings.json</code>:</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;env&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;ANTHROPIC_DEFAULT_SONNET_MODEL&quot;</span><span class="punctuation">:</span> <span class="string">&quot;glm-4.7&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;systemPrompt&quot;</span><span class="punctuation">:</span> <span class="string">&quot;这是团队 X 的项目, 遵循以下编码规范:...&quot;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+<h4 id="文档化使用规范"><a href="#文档化使用规范" class="headerlink" title="文档化使用规范"></a>文档化使用规范</h4><p>创建 <code>CLAUDE.md</code> 文件:</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="section"># Claude Code 使用规范</span></span><br><span class="line"></span><br><span class="line"><span class="section">## 常用指令</span></span><br><span class="line"></span><br><span class="line"><span class="section">## 项目结构</span></span><br><span class="line"></span><br><span class="line"><span class="section">## 编码规范</span></span><br><span class="line"></span><br><span class="line"><span class="section">## 测试要求</span></span><br></pre></td></tr></table></figure>
+<div class="note success flat"><p>✅ 将 <code>.claude/</code> 和 <code>CLAUDE.md</code> 加入版本控制。</p>
+</div>
+<h3 id="性能优化"><a href="#性能优化" class="headerlink" title="性能优化"></a>性能优化</h3><h4 id="减少上下文加载"><a href="#减少上下文加载" class="headerlink" title="减少上下文加载"></a>减少上下文加载</h4><p>使用具体路径而非通配符:</p>
+<p>❌ 不好:<br><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">分析所有组件文件</span><br></pre></td></tr></table></figure></p>
+<p>✅ 好:<br><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">分析 src/components/Auth/Login.tsx 和 src/components/Auth/Register.tsx</span><br></pre></td></tr></table></figure></p>
+<h4 id="使用轻量模型"><a href="#使用轻量模型" class="headerlink" title="使用轻量模型"></a>使用轻量模型</h4><p>简单查询使用 Haiku:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">/model haiku</span><br><span class="line">/ask 这个函数的作用是什么?</span><br></pre></td></tr></table></figure>
+<h4 id="清理历史记录"><a href="#清理历史记录" class="headerlink" title="清理历史记录"></a>清理历史记录</h4><p>定期清理对话历史:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/clear</span><br></pre></td></tr></table></figure>
+<div class="note warning flat"><p>⚠️ 长对话会占用大量 token, 影响响应速度。</p>
+</div>
+<h3 id="安全建议"><a href="#安全建议" class="headerlink" title="安全建议"></a>安全建议</h3><h4 id="不要泄露敏感信息"><a href="#不要泄露敏感信息" class="headerlink" title="不要泄露敏感信息"></a>不要泄露敏感信息</h4><p>❌ 危险:<br><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">这是一个生产环境的数据库配置, host=prod-db.example.com, user=admin, password=xxx, 帮我优化查询</span><br></pre></td></tr></table></figure></p>
+<p>✅ 安全:<br><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">优化以下数据库查询, 使用参数化查询防止 SQL 注入:</span><br><span class="line">[提供脱敏后的查询代码]</span><br></pre></td></tr></table></figure></p>
+<h4 id="审查生成的代码"><a href="#审查生成的代码" class="headerlink" title="审查生成的代码"></a>审查生成的代码</h4><p>Claude Code 生成的代码需要:</p>
+<ol>
+<li>安全审查(SQL 注入、XSS、CSRF 等)</li>
+<li>性能测试(时间复杂度、资源使用)</li>
+<li>边界测试(异常输入、并发场景)</li>
+</ol>
+<div class="note danger flat"><p>🚫 不要直接在生产环境使用生成的代码。</p>
+</div>
+<h4 id="权限管理"><a href="#权限管理" class="headerlink" title="权限管理"></a>权限管理</h4><p>使用 <code>allowedTools</code> 限制可用工具:</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;allowedTools&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">    <span class="string">&quot;Read&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="string">&quot;Edit&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="string">&quot;Grep&quot;</span></span><br><span class="line">  <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;disabledTools&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">    <span class="string">&quot;Bash&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="string">&quot;Git&quot;</span></span><br><span class="line">  <span class="punctuation">]</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="常见问题"><a href="#常见问题" class="headerlink" title="常见问题"></a>常见问题</h2><h3 id="安装问题"><a href="#安装问题" class="headerlink" title="安装问题"></a>安装问题</h3><details class="folding-tag" blue><summary> Q: brew 安装后找不到 claude 命令 </summary>
+              <div class='content'>
+              <p>检查 PATH 配置:</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看 PATH</span></span><br><span class="line"><span class="built_in">echo</span> <span class="variable">$PATH</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 应包含 /opt/homebrew/bin (Apple Silicon) 或 /usr/local/bin (Intel)</span></span><br><span class="line"><span class="comment"># 如果没有, 添加到 ~/.zshrc</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;export PATH=&quot;/opt/homebrew/bin:$PATH&quot;&#x27;</span> &gt;&gt; ~/.zshrc</span><br><span class="line"><span class="built_in">source</span> ~/.zshrc</span><br></pre></td></tr></table></figure>
+              </div>
+            </details>
+<details class="folding-tag" blue><summary> Q: npm 安装后权限不足 </summary>
+              <div class='content'>
+              <p>不要使用 sudo, 使用 nvm 安装 Node.js:</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 安装 nvm</span></span><br><span class="line">curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用 nvm 安装 Node.js</span></span><br><span class="line">nvm install 18</span><br><span class="line">nvm use 18</span><br><span class="line"></span><br><span class="line"><span class="comment"># 重新安装 Claude Code</span></span><br><span class="line">npm install -g @anthropic-ai/claude-code</span><br></pre></td></tr></table></figure>
+              </div>
+            </details>
+<h3 id="认证问题"><a href="#认证问题" class="headerlink" title="认证问题"></a>认证问题</h3><details class="folding-tag" yellow><summary> Q: 提示 Invalid API key </summary>
+              <div class='content'>
+              <p>检查环境变量:</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看 API Key</span></span><br><span class="line"><span class="built_in">echo</span> <span class="variable">$ANTHROPIC_API_KEY</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 应该输出 sk- 开头的 key</span></span><br><span class="line"><span class="comment"># 如果为空, 检查配置文件</span></span><br><span class="line"><span class="built_in">cat</span> ~/.zshrc | grep ANTHROPIC</span><br></pre></td></tr></table></figure>
+              </div>
+            </details>
+<details class="folding-tag" yellow><summary> Q: 网络超时 </summary>
+              <div class='content'>
+              <p>配置代理或使用国内服务:</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 方案一: 配置代理</span></span><br><span class="line"><span class="built_in">export</span> HTTP_PROXY=http://127.0.0.1:7890</span><br><span class="line"><span class="built_in">export</span> HTTPS_PROXY=http://127.0.0.1:7890</span><br><span class="line"></span><br><span class="line"><span class="comment"># 方案二: 使用智谱 GLM-4.7</span></span><br><span class="line"><span class="built_in">export</span> ANTHROPIC_BASE_URL=https://open.bigmodel.cn/api/anthropic/v1</span><br><span class="line"><span class="built_in">export</span> ANTHROPIC_API_KEY=sk-xxx...</span><br></pre></td></tr></table></figure>
+              </div>
+            </details>
+<h3 id="配置问题"><a href="#配置问题" class="headerlink" title="配置问题"></a>配置问题</h3><details class="folding-tag" green><summary> Q: 修改 settings.json 后不生效 </summary>
+              <div class='content'>
+              <p>重启 Claude Code:</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 关闭所有 Claude Code 窗口</span></span><br><span class="line"><span class="comment"># 重新打开终端</span></span><br><span class="line">claude</span><br></pre></td></tr></table></figure><p>如果还不生效, 检查 JSON 格式:</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 验证 JSON 格式</span></span><br><span class="line"><span class="built_in">cat</span> ~/.claude/settings.json | python -m json.tool</span><br></pre></td></tr></table></figure>
+              </div>
+            </details>
+<details class="folding-tag" green><summary> Q: 模型切换失败 </summary>
+              <div class='content'>
+              <p>检查模型名称:</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看当前模型</span></span><br><span class="line">claude &gt; /status</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看可用模型</span></span><br><span class="line">claude &gt; /model list</span><br></pre></td></tr></table></figure><p>确保模型名称正确:</p><ul><li>Haiku: <code>glm-4.5-air</code></li><li>Sonnet: <code>glm-4.7</code></li><li>Opus: <code>glm-4.7</code></li></ul>
+              </div>
+            </details>
+<h3 id="使用问题"><a href="#使用问题" class="headerlink" title="使用问题"></a>使用问题</h3><details class="folding-tag" cyan><summary> Q: 响应速度慢 </summary>
+              <div class='content'>
+              <p>可能的原因和解决方案:</p><ol><li><strong>代码库太大</strong>: 使用具体路径而非通配符</li><li><strong>输出 token 限制太小</strong>: 增加 <code>CLAUDE_CODE_MAX_OUTPUT_TOKENS</code></li><li><strong>网络慢</strong>: 配置代理或使用国内服务</li><li><strong>模型太重</strong>: 切换到 Haiku 处理简单任务</li></ol>
+              </div>
+            </details>
+<details class="folding-tag" cyan><summary> Q: 生成的代码有错误 </summary>
+              <div class='content'>
+              <p>提供更详细的上下文:</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"># 不好</span><br><span class="line">修复这个 bug</span><br><span class="line"></span><br><span class="line"># 好</span><br><span class="line">修复以下 bug: 当用户名包含中文时, 登录失败.</span><br><span class="line">文件: src/api/auth.ts</span><br><span class="line">函数: login()</span><br><span class="line">错误信息: &quot;Invalid username&quot;</span><br><span class="line">期望行为: 支持中文用户名</span><br></pre></td></tr></table></figure>
+              </div>
+            </details>
+<details class="folding-tag" cyan><summary> Q: 如何回滚 Claude Code 的修改 </summary>
+              <div class='content'>
+              <p>使用 Git:</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看变更</span></span><br><span class="line">git diff</span><br><span class="line"></span><br><span class="line"><span class="comment"># 撤销未提交的修改</span></span><br><span class="line">git checkout -- &lt;file&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 回滚已提交的修改</span></span><br><span class="line">git revert &lt;commit-hash&gt;</span><br></pre></td></tr></table></figure><p>P.S. Claude Code 的所有操作都会经过 Git, 可以随时回滚。</p>
+              </div>
+            </details>
+<h3 id="MCP-问题"><a href="#MCP-问题" class="headerlink" title="MCP 问题"></a>MCP 问题</h3><details class="folding-tag" red><summary> Q: MCP 服务器无法连接 </summary>
+              <div class='content'>
+              <p>检查 MCP 配置:</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看 MCP 列表</span></span><br><span class="line">claude mcp list</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看 MCP 日志</span></span><br><span class="line">claude mcp logs &lt;mcp-name&gt;</span><br></pre></td></tr></table></figure><p>常见问题:</p><ul><li>端口被占用: 更换端口</li><li>认证失败: 检查 API Key</li><li>网络不通: 配置代理</li></ul>
+              </div>
+            </details>
+<hr>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><h3 id="官方文档"><a href="#官方文档" class="headerlink" title="官方文档"></a>官方文档</h3><div class="tag link"><a class="link-card" title="Claude Code 官网" target="_blank" rel="noopener" href="https://code.claude.com"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://avatars.githubusercontent.com/u/81847?v=4"/></div><div class="right"><p class="text">Claude Code 官网</p><p class="url">https://code.claude.com</p></div></a></div>
+<div class="tag link"><a class="link-card" title="Claude Code 开发者文档" target="_blank" rel="noopener" href="https://docs.anthropic.com/en/docs/claude-code/overview"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://avatars.githubusercontent.com/u/81847?v=4"/></div><div class="right"><p class="text">Claude Code 开发者文档</p><p class="url">https://docs.anthropic.com/en/docs/claude-code/overview</p></div></a></div>
+<div class="tag link"><a class="link-card" title="MCP 协议规范" target="_blank" rel="noopener" href="https://docs.anthropic.com/en/docs/build-with-claude/mcp"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://avatars.githubusercontent.com/u/182288589?s=200&v=4"/></div><div class="right"><p class="text">MCP 协议规范</p><p class="url">https://docs.anthropic.com/en/docs/build-with-claude/mcp</p></div></a></div>
+<div class="tag link"><a class="link-card" title="Claude API 文档" target="_blank" rel="noopener" href="https://docs.anthropic.com/en/api/index"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://avatars.githubusercontent.com/u/81847?v=4"/></div><div class="right"><p class="text">Claude API 文档</p><p class="url">https://docs.anthropic.com/en/api/index</p></div></a></div>
+<h3 id="社区资源"><a href="#社区资源" class="headerlink" title="社区资源"></a>社区资源</h3><div class="tag link"><a class="link-card" title="anthropics/claude-code" target="_blank" rel="noopener" href="https://github.com/anthropics/claude-code"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://avatars.githubusercontent.com/u/76263028?s=48&v=4"/></div><div class="right"><p class="text">anthropics/claude-code</p><p class="url">https://github.com/anthropics/claude-code</p></div></a></div>
+<div class="tag link"><a class="link-card" title="MCP 服务器列表" target="_blank" rel="noopener" href="https://github.com/modelcontextprotocol"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://avatars.githubusercontent.com/u/182288589?s=200&v=4"/></div><div class="right"><p class="text">MCP 服务器列表</p><p class="url">https://github.com/modelcontextprotocol</p></div></a></div>
+<h3 id="国内资源"><a href="#国内资源" class="headerlink" title="国内资源"></a>国内资源</h3><div class="tag link"><a class="link-card" title="智谱 GLM-4.7 接入指南" target="_blank" rel="noopener" href="https://docs.z.ai/scenario-example/develop-tools/claude"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://cdn.bigmodel.cn/static/logo/dark.svg"/></div><div class="right"><p class="text">智谱 GLM-4.7 接入指南</p><p class="url">https://docs.z.ai/scenario-example/develop-tools/claude</p></div></a></div>
+<div class="tag link"><a class="link-card" title="智谱 AI 开放平台" target="_blank" rel="noopener" href="https://open.bigmodel.cn"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://cdn.bigmodel.cn/static/logo/dark.svg"/></div><div class="right"><p class="text">智谱 AI 开放平台</p><p class="url">https://open.bigmodel.cn</p></div></a></div>
+<div class="tag link"><a class="link-card" title="z.ai 文档" target="_blank" rel="noopener" href="https://docs.z.ai"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://cdn.bigmodel.cn/static/logo/dark.svg"/></div><div class="right"><p class="text">z.ai 文档</p><p class="url">https://docs.z.ai</p></div></a></div>
+<h3 id="相关工具"><a href="#相关工具" class="headerlink" title="相关工具"></a>相关工具</h3><div class="tag link"><a class="link-card" title="Cursor IDE" target="_blank" rel="noopener" href="https://cursor.sh"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://cursor.sh/favicon.ico"/></div><div class="right"><p class="text">Cursor IDE</p><p class="url">https://cursor.sh</p></div></a></div>
+<div class="tag link"><a class="link-card" title="Windsurf IDE" target="_blank" rel="noopener" href="https://windsurf.ai"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://windsurf.ai/favicon.ico"/></div><div class="right"><p class="text">Windsurf IDE</p><p class="url">https://windsurf.ai</p></div></a></div>
+<div class="tag link"><a class="link-card" title="Aider" target="_blank" rel="noopener" href="https://aider.chat"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://aider.chat//assets/logo.svg"/></div><div class="right"><p class="text">Aider</p><p class="url">https://aider.chat</p></div></a></div>
+<hr>
+<div class="note success flat"><p>✅ 到这里, Claude Code 的安装、认证、GLM-4.7 接入与基本使用已完整搭建完成。下一篇文章将重点介绍如何基于此环境实现多模型动态路由、自定义 agent 行为, 以及在真实业务项目中的最佳实践。</p>
+</div>
+</article><div class="post-copyright"><div class="post-copyright__title"><span class="post-copyright-info"><h>Claude文档(一) Claude Code 安装配置</h></span></div><div class="post-copyright__type"><span class="post-copyright-info"><a href="https://koco-co.github.io/posts/8982d5cb/">https://koco-co.github.io/posts/8982d5cb/</a></span></div><div class="post-copyright-m"><div class="post-copyright-m-info"><div class="post-copyright-a"><h>作者</h><div class="post-copyright-cc-info"><h>Sisyphus X</h></div></div><div class="post-copyright-c"><h>发布于</h><div class="post-copyright-cc-info"><h>2026-02-05</h></div></div><div class="post-copyright-u"><h>更新于</h><div class="post-copyright-cc-info"><h>2026-02-10</h></div></div><div class="post-copyright-c"><h>许可协议</h><div class="post-copyright-cc-info"><a class="icon" rel="noopener" target="_blank" title="Creative Commons" href="https://creativecommons.org/"><i class="fab fa-creative-commons"></i></a><a rel="noopener" target="_blank" title="CC BY-NC-SA 4.0" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a></div></div></div></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Claude-Code/">Claude-Code</a><a class="post-meta__tags" href="/tags/GLM-4-7/">GLM-4.7</a><a class="post-meta__tags" href="/tags/Terminal/">Terminal</a></div><div class="post-share"></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞助</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechat.jpeg" target="_blank"><img class="post-qr-code-img" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/wechat.jpeg"/></a><div class="post-qr-code-desc"></div></li><li class="reward-item"><a href="/img/alipay.jpeg" target="_blank"><img class="post-qr-code-img" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/alipay.jpeg"/></a><div class="post-qr-code-desc"></div></li></ul></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/7af74e55/" title="Python 现代化开发工具链指南"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://cdn.jsdelivr.net/gh/koco-co/picgo-images/picgo-images/python-tools.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Python 现代化开发工具链指南</div></div><div class="info-2"><div class="info-item-1">介绍构建现代化 Python 开发环境的核心工具链，涵盖 uv 包管理器、Ruff 代码检查、Pyright 类型检测、pre-commit 钩子、rich 终端美化等工具的安装配置和最佳实践。</div></div></div></a><a class="pagination-related" href="/posts/c97f2813/" title="OpenCode 安装配置"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://cdn.jsdelivr.net/gh/koco-co/picgo-images/picgo-images/opencode-install.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">OpenCode 安装配置</div></div><div class="info-2"><div class="info-item-1">OpenCode 开源 AI 编程助手完整使用攻略，涵盖安装配置、免费模型、功能亮点、插件使用、云端集成等。详细介绍 CLI、客户端、IDE 插件和云端环境四种使用形态。</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/eccdaad5/" title="Claude文档(二) Agent Skills 使用指南"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://cdn.jsdelivr.net/gh/koco-co/picgo-images/picgo-images/agent_skills.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-02-09</div><div class="info-item-2">Claude文档(二) Agent Skills 使用指南</div></div><div class="info-2"><div class="info-item-1">深入了解 Claude Code Skills 系统, 从安装配置到高级应用的完整指南。Skills 是一种上下文感知的指令系统, 相当于带目录的说明书, 能大幅降低 token 消耗与提示词复杂度。</div></div></div></a></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="giscus-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/avatar.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Sisyphus X</div><div class="author-info-description">身如柳絮随风扬 无论云泥意贯一</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">11</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">35</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">8</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/koco-co"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons"><!-- each url, icon in theme.social--><!--   ---><!--     const [link, title, color] = url.split('||').map(i => trim(i))--><!--     const href = url_for(link)--><!--     const iconStyle = color ? `color: ${color.replace(/[\'\"]/g, '')};` : ''--><!--     const iconTitle = title || ''--><!--   a.social-icon(href=href target="_blank" title=iconTitle)--><!--     i(class=icon style=iconStyle)--><a class="social-icon faa-parent animated-hover" href="mailto:kopohub@gmail.com" target="_blank" title="Email"><svg class="social_icon faa-tada" aria-hidden="true"><use xlink:href="#icon-Gmail"></use></svg></a><a class="social-icon faa-parent animated-hover" href="https://v.douyin.com/uk6DHVS-OrI" target="_blank" title="TikTok"><svg class="social_icon faa-tada" aria-hidden="true"><use xlink:href="#icon-douyin"></use></svg></a><a class="social-icon faa-parent animated-hover" href="https://space.bilibili.com/3546823172033014" target="_blank" title="Bilibili"><svg class="social_icon faa-tada" aria-hidden="true"><use xlink:href="#icon-bilibili3"></use></svg></a><a class="social-icon faa-parent animated-hover" href="https://x.com/SugerQvQ" target="_blank" title="Twitter"><svg class="social_icon faa-tada" aria-hidden="true"><use xlink:href="#icon-tuite1"></use></svg></a><a class="social-icon faa-parent animated-hover" href="https://steamcommunity.com/profiles/76561199483116375/" target="_blank" title="Steam"><svg class="social_icon faa-tada" aria-hidden="true"><use xlink:href="#icon-steam"></use></svg></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content"><center>
+  <b>主节点：</b> <a target="_blank" rel="noopener" href="https://llg01.com/#/register?code=D3GEDzcQ" title="流量光机场"><font color="#5ea6e5">流量光机场</font></a>
+  </br>
+  <b>备用节点：</b> <a target="_blank" rel="noopener" href="https://yoyapai.com/category/mianfeijiedian" title="免费节点分享"><font color="#5ea6e5">免费节点分享</font></a>
+</center></div><!-- 添加欢迎访客的信息--><div id="welcome-info"></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A6%82%E8%BF%B0"><span class="toc-number">1.</span> <span class="toc-text">概述</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E7%89%B9%E6%80%A7"><span class="toc-number">1.1.</span> <span class="toc-text">核心特性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toc-number">1.2.</span> <span class="toc-text">适用场景</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%89%E8%A3%85%E9%85%8D%E7%BD%AE"><span class="toc-number">2.</span> <span class="toc-text">安装配置</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%B3%BB%E7%BB%9F%E8%A6%81%E6%B1%82"><span class="toc-number">2.1.</span> <span class="toc-text">系统要求</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%89%E8%A3%85%E6%96%B9%E6%B3%95"><span class="toc-number">2.2.</span> <span class="toc-text">安装方法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%AA%8C%E8%AF%81%E5%AE%89%E8%A3%85"><span class="toc-number">2.3.</span> <span class="toc-text">验证安装</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#VS-Code-JetBrains-IDE-%E6%89%A9%E5%B1%95"><span class="toc-number">2.4.</span> <span class="toc-text">VS Code &#x2F; JetBrains IDE 扩展</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%A4%E8%AF%81%E9%85%8D%E7%BD%AE"><span class="toc-number">3.</span> <span class="toc-text">认证配置</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E5%A4%9A%E6%A8%A1%E5%9E%8B-alias"><span class="toc-number">3.1.</span> <span class="toc-text">创建多模型 alias</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A8%A1%E5%9E%8B%E9%80%89%E6%8B%A9%E4%B8%8E%E4%BC%98%E5%8C%96%E9%85%8D%E7%BD%AE"><span class="toc-number">4.</span> <span class="toc-text">模型选择与优化配置</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Claude-Code-%E6%A8%A1%E5%9E%8B%E6%98%A0%E5%B0%84"><span class="toc-number">4.1.</span> <span class="toc-text">Claude Code 模型映射</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE-GLM-4-7-%E6%A8%A1%E5%9E%8B%E6%98%A0%E5%B0%84"><span class="toc-number">4.2.</span> <span class="toc-text">配置 GLM-4.7 模型映射</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8E%A8%E8%8D%90%E9%85%8D%E7%BD%AE%E7%BB%84%E5%90%88"><span class="toc-number">4.3.</span> <span class="toc-text">推荐配置组合</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%AA%8C%E8%AF%81%E6%A8%A1%E5%9E%8B%E9%85%8D%E7%BD%AE"><span class="toc-number">4.4.</span> <span class="toc-text">验证模型配置</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BF%AB%E9%80%9F%E5%BC%80%E5%A7%8B"><span class="toc-number">5.</span> <span class="toc-text">快速开始</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%90%AF%E5%8A%A8-Claude-Code"><span class="toc-number">5.1.</span> <span class="toc-text">启动 Claude Code</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A6%96%E6%AC%A1%E4%BD%BF%E7%94%A8%E6%8E%88%E6%9D%83"><span class="toc-number">5.2.</span> <span class="toc-text">首次使用授权</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9F%BA%E7%A1%80%E6%B5%8B%E8%AF%95%E6%8C%87%E4%BB%A4"><span class="toc-number">5.3.</span> <span class="toc-text">基础测试指令</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9F%A5%E7%9C%8B%E5%B8%AE%E5%8A%A9%E4%BF%A1%E6%81%AF"><span class="toc-number">5.4.</span> <span class="toc-text">查看帮助信息</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E5%8A%9F%E8%83%BD%E4%BD%BF%E7%94%A8"><span class="toc-number">6.</span> <span class="toc-text">核心功能使用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Slash-Commands-%E5%BF%85%E9%A1%BB%E6%8E%8C%E6%8F%A1"><span class="toc-number">6.1.</span> <span class="toc-text">Slash Commands(必须掌握)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%B8%E5%9E%8B%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toc-number">6.2.</span> <span class="toc-text">典型使用场景</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-%E5%BF%AB%E9%80%9F%E7%90%86%E8%A7%A3%E9%99%8C%E7%94%9F%E9%A1%B9%E7%9B%AE"><span class="toc-number">6.2.1.</span> <span class="toc-text">1. 快速理解陌生项目</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-%E6%89%B9%E9%87%8F%E7%94%9F%E6%88%90%E6%B5%8B%E8%AF%95%E7%94%A8%E4%BE%8B"><span class="toc-number">6.2.2.</span> <span class="toc-text">2. 批量生成测试用例</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-%E8%B7%A8%E6%96%87%E4%BB%B6%E9%87%8D%E6%9E%84"><span class="toc-number">6.2.3.</span> <span class="toc-text">3. 跨文件重构</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-%E8%87%AA%E5%8A%A8%E4%BF%AE%E5%A4%8D-lint-amp-type-%E9%94%99%E8%AF%AF"><span class="toc-number">6.2.4.</span> <span class="toc-text">4. 自动修复 lint &amp; type 错误</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E6%8A%80%E5%B7%A7"><span class="toc-number">6.3.</span> <span class="toc-text">使用技巧</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%98%8E%E7%A1%AE%E6%8C%87%E4%BB%A4"><span class="toc-number">6.3.1.</span> <span class="toc-text">明确指令</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%86%E6%AD%A5%E6%89%A7%E8%A1%8C"><span class="toc-number">6.3.2.</span> <span class="toc-text">分步执行</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BA%A4%E4%BA%92%E5%BC%8F%E7%A1%AE%E8%AE%A4"><span class="toc-number">6.3.3.</span> <span class="toc-text">交互式确认</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%9B%E9%98%B6%E5%8A%9F%E8%83%BD"><span class="toc-number">7.</span> <span class="toc-text">进阶功能</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#MCP-%E5%B7%A5%E5%85%B7%E6%89%A9%E5%B1%95"><span class="toc-number">7.1.</span> <span class="toc-text">MCP 工具扩展</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B8%B8%E7%94%A8-MCP-%E6%9C%8D%E5%8A%A1%E5%99%A8"><span class="toc-number">7.1.1.</span> <span class="toc-text">常用 MCP 服务器</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%9F%A5%E7%9C%8B-%E7%A7%BB%E9%99%A4-MCP"><span class="toc-number">7.1.2.</span> <span class="toc-text">查看&#x2F;移除 MCP</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89%E9%85%8D%E7%BD%AE"><span class="toc-number">7.2.</span> <span class="toc-text">自定义配置</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E4%BD%8D%E7%BD%AE"><span class="toc-number">7.2.1.</span> <span class="toc-text">配置文件位置</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B8%B8%E7%94%A8%E9%85%8D%E7%BD%AE%E9%A1%B9"><span class="toc-number">7.2.2.</span> <span class="toc-text">常用配置项</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F%E9%85%8D%E7%BD%AE"><span class="toc-number">7.3.</span> <span class="toc-text">环境变量配置</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5"><span class="toc-number">8.</span> <span class="toc-text">最佳实践</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B"><span class="toc-number">8.1.</span> <span class="toc-text">工作流程</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-%E9%9C%80%E6%B1%82%E5%88%86%E6%9E%90%E9%98%B6%E6%AE%B5"><span class="toc-number">8.1.1.</span> <span class="toc-text">1. 需求分析阶段</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-%E6%96%B9%E6%A1%88%E8%AE%BE%E8%AE%A1%E9%98%B6%E6%AE%B5"><span class="toc-number">8.1.2.</span> <span class="toc-text">2. 方案设计阶段</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-%E5%AE%9E%E7%8E%B0%E9%98%B6%E6%AE%B5"><span class="toc-number">8.1.3.</span> <span class="toc-text">3. 实现阶段</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-%E6%B5%8B%E8%AF%95%E9%98%B6%E6%AE%B5"><span class="toc-number">8.1.4.</span> <span class="toc-text">4. 测试阶段</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#5-%E6%8F%90%E4%BA%A4%E9%98%B6%E6%AE%B5"><span class="toc-number">8.1.5.</span> <span class="toc-text">5. 提交阶段</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8F%90%E7%A4%BA%E8%AF%8D%E5%B7%A5%E7%A8%8B"><span class="toc-number">8.2.</span> <span class="toc-text">提示词工程</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%A5%BD%E7%9A%84%E6%8F%90%E7%A4%BA%E8%AF%8D%E7%89%B9%E5%BE%81"><span class="toc-number">8.2.1.</span> <span class="toc-text">好的提示词特征</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%8D%E5%A5%BD%E7%9A%84%E6%8F%90%E7%A4%BA%E8%AF%8D%E7%89%B9%E5%BE%81"><span class="toc-number">8.2.2.</span> <span class="toc-text">不好的提示词特征</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9B%A2%E9%98%9F%E5%8D%8F%E4%BD%9C"><span class="toc-number">8.3.</span> <span class="toc-text">团队协作</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BB%9F%E4%B8%80%E9%85%8D%E7%BD%AE"><span class="toc-number">8.3.1.</span> <span class="toc-text">统一配置</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%96%87%E6%A1%A3%E5%8C%96%E4%BD%BF%E7%94%A8%E8%A7%84%E8%8C%83"><span class="toc-number">8.3.2.</span> <span class="toc-text">文档化使用规范</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96"><span class="toc-number">8.4.</span> <span class="toc-text">性能优化</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%87%8F%E5%B0%91%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8A%A0%E8%BD%BD"><span class="toc-number">8.4.1.</span> <span class="toc-text">减少上下文加载</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E8%BD%BB%E9%87%8F%E6%A8%A1%E5%9E%8B"><span class="toc-number">8.4.2.</span> <span class="toc-text">使用轻量模型</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%B8%85%E7%90%86%E5%8E%86%E5%8F%B2%E8%AE%B0%E5%BD%95"><span class="toc-number">8.4.3.</span> <span class="toc-text">清理历史记录</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%89%E5%85%A8%E5%BB%BA%E8%AE%AE"><span class="toc-number">8.5.</span> <span class="toc-text">安全建议</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%8D%E8%A6%81%E6%B3%84%E9%9C%B2%E6%95%8F%E6%84%9F%E4%BF%A1%E6%81%AF"><span class="toc-number">8.5.1.</span> <span class="toc-text">不要泄露敏感信息</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%A1%E6%9F%A5%E7%94%9F%E6%88%90%E7%9A%84%E4%BB%A3%E7%A0%81"><span class="toc-number">8.5.2.</span> <span class="toc-text">审查生成的代码</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%9D%83%E9%99%90%E7%AE%A1%E7%90%86"><span class="toc-number">8.5.3.</span> <span class="toc-text">权限管理</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98"><span class="toc-number">9.</span> <span class="toc-text">常见问题</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%89%E8%A3%85%E9%97%AE%E9%A2%98"><span class="toc-number">9.1.</span> <span class="toc-text">安装问题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AE%A4%E8%AF%81%E9%97%AE%E9%A2%98"><span class="toc-number">9.2.</span> <span class="toc-text">认证问题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE%E9%97%AE%E9%A2%98"><span class="toc-number">9.3.</span> <span class="toc-text">配置问题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E9%97%AE%E9%A2%98"><span class="toc-number">9.4.</span> <span class="toc-text">使用问题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#MCP-%E9%97%AE%E9%A2%98"><span class="toc-number">9.5.</span> <span class="toc-text">MCP 问题</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-number">10.</span> <span class="toc-text">参考资料</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%98%E6%96%B9%E6%96%87%E6%A1%A3"><span class="toc-number">10.1.</span> <span class="toc-text">官方文档</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A4%BE%E5%8C%BA%E8%B5%84%E6%BA%90"><span class="toc-number">10.2.</span> <span class="toc-text">社区资源</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9B%BD%E5%86%85%E8%B5%84%E6%BA%90"><span class="toc-number">10.3.</span> <span class="toc-text">国内资源</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%9B%B8%E5%85%B3%E5%B7%A5%E5%85%B7"><span class="toc-number">10.4.</span> <span class="toc-text">相关工具</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/posts/7a1d94f5/" title="FastAPI文档(二) 进阶"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://cdn.jsdelivr.net/gh/koco-co/picgo-images/picgo-images/fastapi.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="FastAPI文档(二) 进阶"/></a><div class="content"><a class="title" href="/posts/7a1d94f5/" title="FastAPI文档(二) 进阶">FastAPI文档(二) 进阶</a><time datetime="2026-02-10T05:37:03.000Z" title="发表于 2026-02-10 13:37:03">2026-02-10</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/posts/6b2c83c4/" title="FastAPI文档(一) 入门"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://cdn.jsdelivr.net/gh/koco-co/picgo-images/picgo-images/fastapi.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="FastAPI文档(一) 入门"/></a><div class="content"><a class="title" href="/posts/6b2c83c4/" title="FastAPI文档(一) 入门">FastAPI文档(一) 入门</a><time datetime="2026-02-10T04:35:13.000Z" title="发表于 2026-02-10 12:35:13">2026-02-10</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/posts/eccdaad5/" title="Claude文档(二) Agent Skills 使用指南"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://cdn.jsdelivr.net/gh/koco-co/picgo-images/picgo-images/agent_skills.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Claude文档(二) Agent Skills 使用指南"/></a><div class="content"><a class="title" href="/posts/eccdaad5/" title="Claude文档(二) Agent Skills 使用指南">Claude文档(二) Agent Skills 使用指南</a><time datetime="2026-02-09T05:41:40.000Z" title="发表于 2026-02-09 13:41:40">2026-02-09</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/posts/7af74e55/" title="Python 现代化开发工具链指南"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://cdn.jsdelivr.net/gh/koco-co/picgo-images/picgo-images/python-tools.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Python 现代化开发工具链指南"/></a><div class="content"><a class="title" href="/posts/7af74e55/" title="Python 现代化开发工具链指南">Python 现代化开发工具链指南</a><time datetime="2026-02-08T16:00:00.000Z" title="发表于 2026-02-09 00:00:00">2026-02-09</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/posts/8982d5cb/" title="Claude文档(一) Claude Code 安装配置"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://cdn.jsdelivr.net/gh/koco-co/picgo-images/picgo-images/claudecode-install.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Claude文档(一) Claude Code 安装配置"/></a><div class="content"><a class="title" href="/posts/8982d5cb/" title="Claude文档(一) Claude Code 安装配置">Claude文档(一) Claude Code 安装配置</a><time datetime="2026-02-05T07:07:36.000Z" title="发表于 2026-02-05 15:07:36">2026-02-05</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By Sisyphus X</span></div><div class="footer_custom_text"><div style="font-size: 14px; line-height: 1.6; color: #666; margin-bottom: 20px;">
+  <p><strong>免责声明</strong></p>
+  <p>本站发布的内容仅供学习和研究使用，禁止用于商业或非法用途。若因违规使用导致任何后果，均由用户自行承担。</p>
+  <p>请在下载后24小时内彻底删除相关文件。访问即表示您同意本声明条款。</p>
+  <p>部分资源来自互联网，如有侵权或不妥之处，请联系站长处理。</p>
+</div>
+
+<div style="text-align: center; font-size: 13px; color: #888; margin-top: 15px;">
+  <a target="_blank" href="https://hexo.io/"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://img.shields.io/badge/Frame-Hexo-blue?style=flat&logo=hexo" title="博客框架为Hexo"></a>&nbsp;
+  <a target="_blank" href="https://butterfly.js.org/"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://img.shields.io/badge/Theme-Butterfly-6513df?style=flat&logo=bitdefender" title="主题采用Butterfly"></a>&nbsp;
+  <a target="_blank" href="https://www.jsdelivr.com/"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://img.shields.io/badge/CDN-jsDelivr-5a46a4?style=flat&logo=jsdelivr" title="本站使用jsDelivr为静态资源提供CDN加速"></a>&nbsp;
+  <a target="_blank" href="https://github.com/"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://img.shields.io/badge/Source-Github-d021d6?style=flat&logo=GitHub" title="本站项目由GitHub托管"></a>&nbsp;
+  <a target="_blank" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://img.shields.io/badge/Copyright-BY--NC--SA%204.0-d42328?style=flat&logo=Claris" title="本站采用知识共享署名-非商业性使用-相同方式共享4.0国际许可协议进行许可"></a>
+</div></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button><button id="go-down" type="button" title="直达底部" onclick="btf.scrollToDest(document.body.scrollHeight, 500)"><i class="fas fa-arrow-down"></i></button></div></div><div><script src="/js/utils.js?v=5.5.3"></script><script src="/js/main.js?v=5.5.3"></script><script src="/js/tw_cn.js?v=5.5.3"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload@19.1.3/dist/lazyload.iife.min.js"></script><div class="js-pjax"><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const config = mermaidSrc.dataset.config ? JSON.parse(mermaidSrc.dataset.config) : {}
+      if (!config.theme) {
+        config.theme = theme
+      }
+      const mermaidThemeConfig = `%%{init: ${JSON.stringify(config)}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (false) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid@11.12.2/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const applyThemeDefaultsConfig = theme => {
+    if (theme === 'dark-mode') {
+      Chart.defaults.color = "rgba(255, 255, 255, 0.8)"
+      Chart.defaults.borderColor = "rgba(255, 255, 255, 0.2)"
+      Chart.defaults.scale.ticks.backdropColor = "transparent"
+    } else {
+      Chart.defaults.color = "rgba(0, 0, 0, 0.8)"
+      Chart.defaults.borderColor = "rgba(0, 0, 0, 0.1)"
+      Chart.defaults.scale.ticks.backdropColor = "transparent"
+    }
+  }
+
+  // Recursively traverse the config object and automatically apply theme-specific color schemes
+  const applyThemeConfig = (obj, theme) => {
+    if (typeof obj !== 'object' || obj === null) return
+
+    Object.keys(obj).forEach(key => {
+      const value = obj[key]
+      // If the property is an object and has theme-specific options, apply them
+      if (typeof value === 'object' && value !== null) {
+        if (value[theme]) {
+          obj[key] = value[theme] // Apply the value for the current theme
+        } else {
+          // Recursively process child objects
+          applyThemeConfig(value, theme)
+        }
+      }
+    })
+  }
+
+  const runChartJS = ele => {
+    window.loadChartJS = true
+
+    Array.from(ele).forEach((item, index) => {
+      const chartSrc = item.firstElementChild
+      const chartID = item.getAttribute('data-chartjs-id') || ('chartjs-' + index) // Use custom ID or default ID
+      const width = item.getAttribute('data-width')
+      const existingCanvas = document.getElementById(chartID)
+
+      // If a canvas already exists, remove it to avoid rendering duplicates
+      if (existingCanvas) {
+          existingCanvas.parentNode.remove()
+      }
+
+      const chartDefinition = chartSrc.textContent
+      const canvas = document.createElement('canvas')
+      canvas.id = chartID
+
+      const div = document.createElement('div')
+      div.className = 'chartjs-wrap'
+
+      if (width) {
+        div.style.width = width
+      }
+
+      div.appendChild(canvas)
+      chartSrc.insertAdjacentElement('afterend', div)
+
+      const ctx = document.getElementById(chartID).getContext('2d')
+
+      const config = JSON.parse(chartDefinition)
+
+      const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark-mode' : 'light-mode'
+
+      // Set default styles (initial setup)
+      applyThemeDefaultsConfig(theme)
+
+      // Automatically traverse the config and apply dual-mode color schemes
+      applyThemeConfig(config, theme)
+
+      new Chart(ctx, config)
+    })
+  }
+
+  const loadChartJS = () => {
+    const chartJSEle = document.querySelectorAll('#article-container .chartjs-container')
+    if (chartJSEle.length === 0) return
+
+    window.loadChartJS ? runChartJS(chartJSEle) : btf.getScript('https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js').then(() => runChartJS(chartJSEle))
+  }
+
+  // Listen for theme change events
+  btf.addGlobalFn('themeChange', loadChartJS, 'chartjs')
+  btf.addGlobalFn('encrypt', loadChartJS, 'chartjs')
+
+  window.pjax ? loadChartJS() : document.addEventListener('DOMContentLoaded', loadChartJS)
+})()</script><script>(() => {
+  const abcjsInit = () => {
+    const abcjsFn = () => {
+      setTimeout(() => {
+        const sheets = document.querySelectorAll(".abc-music-sheet")
+        for (let i = 0; i < sheets.length; i++) {
+          const ele = sheets[i]
+          if (ele.children.length > 0) continue
+
+          // Parse parameters from data-params attribute
+          let params = {}
+          const dp = ele.getAttribute("data-params")
+          if (dp) {
+            try {
+              params = JSON.parse(dp)
+            } catch (e) {
+              console.error("Failed to parse data-params:", e)
+            }
+          }
+
+          // Merge parsed parameters with the responsive option
+          // Ensures params content appears before responsive
+          const options = { ...params, responsive: "resize" }
+
+          // Render the music score using ABCJS.renderAbc
+          ABCJS.renderAbc(ele, ele.innerHTML, options)
+        }
+      }, 100)
+    }
+
+    if (typeof ABCJS === "object") {
+      abcjsFn()
+    } else {
+      btf.getScript("https://cdn.jsdelivr.net/npm/abcjs@6.5.2/dist/abcjs-basic-min.min.js").then(abcjsFn)
+    }
+  }
+
+  if (window.pjax) {
+    abcjsInit()
+  } else {
+    window.addEventListener("load", abcjsInit)
+  }
+
+  btf.addGlobalFn("encrypt", abcjsInit, "abcjs")
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const getGiscusTheme = theme => theme === 'dark' ? 'dark' : 'light'
+
+  const createScriptElement = config => {
+    const ele = document.createElement('script')
+    Object.entries(config).forEach(([key, value]) => {
+      ele.setAttribute(key, value)
+    })
+    return ele
+  }
+
+  const loadGiscus = (el = document, key) => {
+    const mappingConfig = isShuoshuo
+      ? { 'data-mapping': 'specific', 'data-term': key }
+      : { 'data-mapping': (option && option['data-mapping']) || 'pathname' }
+
+    const giscusConfig = {
+      src: 'https://giscus.app/client.js',
+      'data-repo': '',
+      'data-repo-id': '',
+      'data-category-id': '',
+      'data-theme': getGiscusTheme(document.documentElement.getAttribute('data-theme')),
+      'data-reactions-enabled': '1',
+      crossorigin: 'anonymous',
+      async: true,
+      ...option,
+      ...mappingConfig
+    }
+
+    const scriptElement = createScriptElement(giscusConfig)
+
+    el.querySelector('#giscus-wrap').appendChild(scriptElement)
+
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGiscus = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+  }
+
+  const changeGiscusTheme = theme => {
+    const iframe = document.querySelector('#giscus-wrap iframe')
+    if (iframe) {
+      const message = {
+        giscus: {
+          setConfig: {
+            theme: getGiscusTheme(theme)
+          }
+        }
+      }
+      iframe.contentWindow.postMessage(message, 'https://giscus.app')
+    }
+  }
+
+  btf.addGlobalFn('themeChange', changeGiscusTheme, 'giscus')
+
+  if (isShuoshuo) {
+    'Giscus' === 'Giscus'
+      ? window.shuoshuoComment = { loadComment: loadGiscus }
+      : window.loadOtherComment = loadGiscus
+    return
+  }
+
+  if ('Giscus' === 'Giscus' || !false) {
+    if (false) btf.loadComment(document.getElementById('giscus-wrap'), loadGiscus)
+    else loadGiscus()
+  } else {
+    window.loadOtherComment = loadGiscus
+  }
+})()</script></div><canvas id="universe"></canvas><script defer src="/js/universe.js"></script><script async src="//at.alicdn.com/t/c/font_5107453_kyxe7zjyy0h.js"></script><script defer type="text/javascript" src="https://cdn1.tianli0.top/npm/sweetalert2@8.19.0/dist/sweetalert2.all.js"></script><script defer src="/js/lunar.js"></script><script defer src="/js/day.js"></script><script src="https://cdn.staticfile.org/jquery/3.6.3/jquery.min.js"></script><script async data-pjax src="/js/txmap.js"></script><script src="/js/tag-heatmap.js"></script><script src="/js/post-tags-style.js"></script><div class="aplayer no-destroy" data-id="17375390739" data-server="netease" data-type="playlist" data-fixed="true" data-autoplay="true" data-lrcType="-1"> </div><script src="https://cdn.jsdelivr.net/npm/pjax@0.2.8/pjax.min.js" defer="defer"></script><script>document.addEventListener('DOMContentLoaded', () => {
+  const pjaxSelectors = ["meta[property=\"og:image\"]","meta[property=\"og:title\"]","meta[property=\"og:url\"]","meta[property=\"og:description\"]","link[rel=\"canonical\"]","head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+
+  window.pjax = new Pjax({
+    elements: 'a:not([target="_blank"])',
+    selectors: pjaxSelectors,
+    cacheBust: false,
+    analytics: false,
+    scrollRestoration: false
+  })
+
+  const triggerPjaxFn = (val) => {
+    if (!val) return
+    Object.values(val).forEach(fn => {
+      try {
+        fn()
+      } catch (err) {
+        console.debug('Pjax callback failed:', err)
+      }
+    })
+  }
+
+  document.addEventListener('pjax:send', () => {
+    // removeEventListener
+    btf.removeGlobalFnEvent('pjaxSendOnce')
+    btf.removeGlobalFnEvent('themeChange')
+
+    // reset readmode
+    const $bodyClassList = document.body.classList
+    if ($bodyClassList.contains('read-mode')) $bodyClassList.remove('read-mode')
+
+    triggerPjaxFn(window.globalFn.pjaxSend)
+  })
+
+  document.addEventListener('pjax:complete', () => {
+    btf.removeGlobalFnEvent('pjaxCompleteOnce')
+    document.querySelectorAll('script[data-pjax]').forEach(item => {
+      const newScript = document.createElement('script')
+      const content = item.text || item.textContent || item.innerHTML || ""
+      Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+      newScript.appendChild(document.createTextNode(content))
+      item.parentNode.replaceChild(newScript, item)
+    })
+
+    triggerPjaxFn(window.globalFn.pjaxComplete)
+  })
+
+  document.addEventListener('pjax:error', e => {
+    if (e.request.status === 404) {
+      true
+        ? pjax.loadUrl('/404.html')
+        : window.location.href = e.request.responseURL
+    }
+  })
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="输入关键词..." type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js?v=5.5.3"></script></div></div><!-- hexo injector body_end start --><script async src="//at.alicdn.com/t/font_2032782_8d5kxvn09md.js"></script><!-- hexo injector body_end end --></body></html>
