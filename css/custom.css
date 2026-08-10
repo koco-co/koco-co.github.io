@@ -751,3 +751,80 @@ svg.social_icon {
         /* 移动端默认隐藏，保持页面整洁 */
     }
 }
+
+
+/* ===== 分类页和标签页标签块缩小 ===== */
+
+/* 分类列表缩小 */
+.category-lists .category-list a {
+    padding: 6px 12px !important;
+    font-size: 14px !important;
+    border-radius: 12px !important;
+    margin: 4px !important;
+    display: inline-block !important;
+}
+
+/* 分类列表项缩小 */
+.category-lists .category-list .category-list-item {
+    margin-bottom: 8px !important;
+}
+
+/* 分类列表链接内间距 */
+.category-lists .category-list .category-list-item a {
+    padding: 4px 10px !important;
+    font-size: 13px !important;
+}
+
+/* 分类计数缩小 */
+.category-lists .category-list .category-list-item .category-count {
+    font-size: 12px !important;
+    padding: 2px 6px !important;
+    min-width: 28px !important;
+    height: 18px !important;
+    line-height: 18px !important;
+}
+
+/* 子分类列表缩小 */
+.category-lists .category-list .category-list-child {
+    margin-top: 6px !important;
+    padding-left: 16px !important;
+}
+
+.category-lists .category-list .category-list-child li {
+    margin: 3px 0 !important;
+}
+
+/* 标签云缩小 */
+.tag-list .tag-cloud-list a {
+    padding: 4px 10px !important;
+    font-size: 13px !important;
+    border-radius: 10px !important;
+    margin: 4px !important;
+    display: inline-block !important;
+}
+
+/* 标签列表缩小（如果是列表形式） */
+.tag-list .tag-list-item {
+    margin-bottom: 6px !important;
+}
+
+.tag-list .tag-list-item a {
+    padding: 4px 10px !important;
+    font-size: 13px !important;
+    border-radius: 8px !important;
+}
+
+/* 移动端进一步缩小 */
+@media screen and (max-width: 768px) {
+    .category-lists .category-list a {
+        padding: 4px 8px !important;
+        font-size: 12px !important;
+        margin: 2px !important;
+    }
+
+    .tag-list .tag-cloud-list a {
+        padding: 3px 8px !important;
+        font-size: 12px !important;
+        margin: 2px !important;
+    }
+}
