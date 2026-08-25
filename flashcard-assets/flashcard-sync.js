@@ -71,6 +71,20 @@
     return `${location.origin}${location.pathname}${location.search}`;
   }
 
+  async function startOAuth(client) {
+    const { data, error } = await client.auth.signInWithOAuth({
+      provider: 'github',
+      options: {
+        redirectTo: redirectToCurrentPage(),
+        skipBrowserRedirect: true
+      }
+    });
+    if (error || !data?.url) return false;
+    if (typeof window !== 'undefined' && window.location?.assign) window.location.assign(data.url);
+    else if (typeof location !== 'undefined') location.href = data.url;
+    return true;
+  }
+
   function reviewTime(card) {
     return finiteNumber(card?.last_review) ?? 0;
   }
@@ -145,6 +159,7 @@
     let mutationVersion = 0;
     let disposed = false;
     let authSubscription = null;
+    let initPromise = null;
 
     function saveMeta() {
       try {
@@ -231,13 +246,10 @@
     }
 
     async function signIn() {
+      if (!client) await init();
       if (!client) return false;
       emit('authorizing');
-      const { error } = await client.auth.signInWithOAuth({
-        provider: 'github',
-        options: { redirectTo: redirectToCurrentPage() }
-      });
-      if (error) {
+      if (!await startOAuth(client)) {
         emit('error');
         return false;
       }
@@ -281,31 +293,35 @@
     }
 
     async function init() {
-      if (!config.enabled) {
-        emit('disabled');
-        return;
-      }
-      client = clientFor(config);
-      if (!client) {
-        emit('unavailable');
-        return;
-      }
+      if (initPromise) return initPromise;
+      initPromise = (async () => {
+        if (!config.enabled) {
+          emit('disabled');
+          return;
+        }
+        client = clientFor(config);
+        if (!client) {
+          emit('unavailable');
+          return;
+        }
 
-      const listener = client.auth.onAuthStateChange((_event, nextSession) => {
-        session = nextSession;
+        const listener = client.auth.onAuthStateChange((_event, nextSession) => {
+          session = nextSession;
+          emit(session ? 'ready' : 'local');
+          if (session) setTimeout(() => syncNow(), 0);
+        });
+        authSubscription = listener.data.subscription;
+
+        const { data, error } = await client.auth.getSession();
+        if (error) {
+          emit('error');
+          return;
+        }
+        session = data.session;
         emit(session ? 'ready' : 'local');
-        if (session) setTimeout(() => syncNow(), 0);
-      });
-      authSubscription = listener.data.subscription;
-
-      const { data, error } = await client.auth.getSession();
-      if (error) {
-        emit('error');
-        return;
-      }
-      session = data.session;
-      emit(session ? 'ready' : 'local');
-      if (session) await syncNow();
+        if (session) await syncNow();
+      })();
+      return initPromise;
     }
 
     function handleOnline() {
@@ -341,6 +357,7 @@
     let session = null;
     let disposed = false;
     let authSubscription = null;
+    let initPromise = null;
 
     function emit(status, detail) {
       if (disposed) return;
@@ -353,13 +370,10 @@
     }
 
     async function signIn() {
+      if (!client) await init();
       if (!client) return false;
       emit('authorizing');
-      const { error } = await client.auth.signInWithOAuth({
-        provider: 'github',
-        options: { redirectTo: redirectToCurrentPage() }
-      });
-      if (error) {
+      if (!await startOAuth(client)) {
         emit('error');
         return false;
       }
@@ -379,29 +393,33 @@
     }
 
     async function init() {
-      if (!config.enabled) {
-        emit('disabled');
-        return;
-      }
-      client = clientFor(config);
-      if (!client) {
-        emit('unavailable');
-        return;
-      }
+      if (initPromise) return initPromise;
+      initPromise = (async () => {
+        if (!config.enabled) {
+          emit('disabled');
+          return;
+        }
+        client = clientFor(config);
+        if (!client) {
+          emit('unavailable');
+          return;
+        }
 
-      const listener = client.auth.onAuthStateChange((_event, nextSession) => {
-        session = nextSession;
+        const listener = client.auth.onAuthStateChange((_event, nextSession) => {
+          session = nextSession;
+          emit(session ? 'ready' : 'local');
+        });
+        authSubscription = listener.data.subscription;
+
+        const { data, error } = await client.auth.getSession();
+        if (error) {
+          emit('error');
+          return;
+        }
+        session = data.session;
         emit(session ? 'ready' : 'local');
-      });
-      authSubscription = listener.data.subscription;
-
-      const { data, error } = await client.auth.getSession();
-      if (error) {
-        emit('error');
-        return;
-      }
-      session = data.session;
-      emit(session ? 'ready' : 'local');
+      })();
+      return initPromise;
     }
 
     function dispose() {
