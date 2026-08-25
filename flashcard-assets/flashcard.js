@@ -307,6 +307,7 @@
       if (syncNow) syncNow.hidden = !state.authenticated;
       if (logout) logout.hidden = !state.authenticated;
       panel.dataset.hfcSyncState = state.status;
+      panel.dataset.hfcAvatarUrl = state.avatarUrl || '';
       updateResetLabels(state.authenticated);
     }
 

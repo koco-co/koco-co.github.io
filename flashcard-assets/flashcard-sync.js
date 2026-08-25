@@ -8,6 +8,9 @@
   'use strict';
 
   const SYNC_STORAGE_KEY = 'hexo-flashcard-plugin:sync:v1';
+  let sharedClient = null;
+  let sharedClientFactory = null;
+  let sharedClientSignature = '';
 
   function emptyProgress() {
     return { version: 3, cards: {}, days: {} };
@@ -28,6 +31,44 @@
 
   function finiteNumber(value) {
     return Number.isFinite(value) ? value : null;
+  }
+
+  function githubAvatarUrl(currentSession) {
+    const user = currentSession?.user;
+    const metadata = user?.user_metadata || {};
+    const identity = user?.identities?.find((item) => item?.provider === 'github');
+    const identityData = identity?.identity_data || {};
+    const candidate = metadata.avatar_url || metadata.picture || identityData.avatar_url || identityData.picture;
+    if (typeof candidate !== 'string' || !candidate.trim()) return '';
+
+    try {
+      const url = new URL(candidate);
+      return url.protocol === 'https:' && url.hostname === 'avatars.githubusercontent.com' ? url.href : '';
+    } catch (error) {
+      return '';
+    }
+  }
+
+  function clientFor(config) {
+    const factory = globalThis.supabase?.createClient;
+    if (!factory || !config?.url || !config?.publishableKey) return null;
+    const signature = `${config.url}\u0000${config.publishableKey}`;
+    if (!sharedClient || sharedClientFactory !== factory || sharedClientSignature !== signature) {
+      sharedClient = factory(config.url, config.publishableKey, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true
+        }
+      });
+      sharedClientFactory = factory;
+      sharedClientSignature = signature;
+    }
+    return sharedClient;
+  }
+
+  function redirectToCurrentPage() {
+    return `${location.origin}${location.pathname}${location.search}`;
   }
 
   function reviewTime(card) {
@@ -119,7 +160,8 @@
         status,
         detail: detail || '',
         authenticated: Boolean(session),
-        lastSyncedAt: meta.lastSyncedAt
+        lastSyncedAt: meta.lastSyncedAt,
+        avatarUrl: githubAvatarUrl(session)
       });
     }
 
@@ -191,10 +233,9 @@
     async function signIn() {
       if (!client) return false;
       emit('authorizing');
-      const redirectTo = `${location.origin}${location.pathname}${location.search}`;
       const { error } = await client.auth.signInWithOAuth({
         provider: 'github',
-        options: { redirectTo }
+        options: { redirectTo: redirectToCurrentPage() }
       });
       if (error) {
         emit('error');
@@ -244,18 +285,11 @@
         emit('disabled');
         return;
       }
-      if (!globalThis.supabase?.createClient || !config.url || !config.publishableKey) {
+      client = clientFor(config);
+      if (!client) {
         emit('unavailable');
         return;
       }
-
-      client = globalThis.supabase.createClient(config.url, config.publishableKey, {
-        auth: {
-          persistSession: true,
-          autoRefreshToken: true,
-          detectSessionInUrl: true
-        }
-      });
 
       const listener = client.auth.onAuthStateChange((_event, nextSession) => {
         session = nextSession;
@@ -300,5 +334,89 @@
     };
   }
 
-  return { SYNC_STORAGE_KEY, createSyncController, emptyProgress, mergeProgress, normalizeProgress };
+  function createAuthController(options) {
+    const config = options.config || {};
+    const onState = options.onState || (() => {});
+    let client = null;
+    let session = null;
+    let disposed = false;
+    let authSubscription = null;
+
+    function emit(status, detail) {
+      if (disposed) return;
+      onState({
+        status,
+        detail: detail || '',
+        authenticated: Boolean(session),
+        avatarUrl: githubAvatarUrl(session)
+      });
+    }
+
+    async function signIn() {
+      if (!client) return false;
+      emit('authorizing');
+      const { error } = await client.auth.signInWithOAuth({
+        provider: 'github',
+        options: { redirectTo: redirectToCurrentPage() }
+      });
+      if (error) {
+        emit('error');
+        return false;
+      }
+      return true;
+    }
+
+    async function signOut() {
+      if (!client) return false;
+      const { error } = await client.auth.signOut({ scope: 'local' });
+      if (error) {
+        emit('error');
+        return false;
+      }
+      session = null;
+      emit('local');
+      return true;
+    }
+
+    async function init() {
+      if (!config.enabled) {
+        emit('disabled');
+        return;
+      }
+      client = clientFor(config);
+      if (!client) {
+        emit('unavailable');
+        return;
+      }
+
+      const listener = client.auth.onAuthStateChange((_event, nextSession) => {
+        session = nextSession;
+        emit(session ? 'ready' : 'local');
+      });
+      authSubscription = listener.data.subscription;
+
+      const { data, error } = await client.auth.getSession();
+      if (error) {
+        emit('error');
+        return;
+      }
+      session = data.session;
+      emit(session ? 'ready' : 'local');
+    }
+
+    function dispose() {
+      disposed = true;
+      authSubscription?.unsubscribe();
+    }
+
+    return {
+      init,
+      dispose,
+      isAuthenticated: () => Boolean(session),
+      signIn,
+      signOut
+    };
+  }
+
+  return { SYNC_STORAGE_KEY, createAuthController, createSyncController, emptyProgress, mergeProgress, normalizeProgress };
 });
