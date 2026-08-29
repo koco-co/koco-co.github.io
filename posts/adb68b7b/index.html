@@ -1,0 +1,1193 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>测试基础(十四)缺陷管理与测试报告 | 𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮'𝓼 𝓦𝓸𝓻𝓴𝓢𝓹𝓪𝓬𝓮</title><meta name="author" content="𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮"><meta name="copyright" content="𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="ffffff"><meta name="description" content="将测试观察转为缺陷与质量沟通，写出可复现缺陷和不夸大覆盖的测试报告。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="测试基础(十四)缺陷管理与测试报告">
+<meta property="og:url" content="https://koco-co.github.io/posts/adb68b7b/index.html">
+<meta property="og:site_name" content="𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮&#39;𝓼 𝓦𝓸𝓻𝓴𝓢𝓹𝓪𝓬𝓮">
+<meta property="og:description" content="将测试观察转为缺陷与质量沟通，写出可复现缺陷和不夸大覆盖的测试报告。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://koco-co.github.io/img/learn-topic/testing-basics/course-cover.png">
+<meta property="article:published_time" content="2026-05-26T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-08-29T15:00:10.023Z">
+<meta property="article:author" content="𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮">
+<meta property="article:tag" content="测试基础">
+<meta property="article:tag" content="系统学习">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://koco-co.github.io/img/learn-topic/testing-basics/course-cover.png"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "测试基础(十四)缺陷管理与测试报告",
+  "url": "https://koco-co.github.io/posts/adb68b7b/",
+  "image": "https://koco-co.github.io/img/learn-topic/testing-basics/course-cover.png",
+  "datePublished": "2026-05-26T16:00:00.000Z",
+  "dateModified": "2026-08-29T15:00:10.023Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮",
+      "url": "https://koco-co.github.io"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.ico"><link rel="canonical" href="https://koco-co.github.io/posts/adb68b7b/index.html"><link rel="preconnect"/><link rel="stylesheet" href="/css/index.css?v=5.7.0"><link rel="stylesheet" href="/vendor/butterfly/fontawesome/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        const data = { value }
+
+        if (ttl != null) {
+          data.expiry = Date.now() + ttl * 86400000
+        }
+
+        localStorage.setItem(key, JSON.stringify(data))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return
+
+        try {
+          const data = JSON.parse(itemStr)
+
+          if (data.expiry && Date.now() > data.expiry) {
+            localStorage.removeItem(key)
+            return
+          }
+
+          return data.value
+        } catch {
+          localStorage.removeItem(key)
+        }
+      }
+    }
+
+    const scriptCache = new Map()
+    const cssCache = new Map()
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => {
+        if (scriptCache.has(url)) {
+          return scriptCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+
+          script.src = url
+          script.async = true
+
+          for (const key in attr) {
+            script.setAttribute(key, attr[key])
+          }
+
+          script.onload = resolve
+          script.onerror = reject
+
+          document.head.appendChild(script)
+        })
+
+        scriptCache.set(url, promise)
+
+        return promise
+      },
+      getCSS: (url, id) => {
+        if (cssCache.has(url)) {
+          return cssCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const link = document.createElement('link')
+
+          link.rel = 'stylesheet'
+          link.href = url
+
+          if (id) {
+            link.id = id
+          }
+
+          link.onload = resolve
+          link.onerror = reject
+
+          document.head.appendChild(link)
+        })
+
+        cssCache.set(url, promise)
+
+        return promise
+      },
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!true && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+      const activateDarkMode = () => {
+        document.documentElement.dataset.theme = 'dark'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.dataset.theme = 'light'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', 'ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const mediaQueryDark = window.matchMedia('(prefers-color-scheme: dark)')
+          const mediaQueryLight = window.matchMedia('(prefers-color-scheme: light)')
+
+          if (theme === undefined) {
+            if (mediaQueryLight.matches) activateLightMode()
+            else if (mediaQueryDark.matches) activateDarkMode()
+            else {
+              const hour = new Date().getHours()
+              const start = 10
+              const end = 22
+              const isNight =
+                start < end
+                    ? hour < start || hour >= end
+                    : hour >= start || hour < end
+              isNight ? activateDarkMode() : activateLightMode()
+            }
+            mediaQueryDark.addEventListener('change', e => {
+              if (saveToLocal.get('theme') === undefined) {
+                e.matches ? activateDarkMode() : activateLightMode()
+              }
+            })
+          } else {
+            theme === 'light' ? activateLightMode() : activateDarkMode()
+          }
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":true,"pagination":{"enable":true,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":300,"highlightFullpage":false,"highlightMacStyle":true},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/vendor/butterfly/infinitegrid/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: true,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '测试基础(十四)缺陷管理与测试报告',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/custom.css"><link rel="stylesheet" href="/css/universe.css"><link rel="stylesheet" href="/css/page-archive-categories-tags.css"><link rel="stylesheet" href="/css/post-tags.css"><link rel="stylesheet" href="/css/external-media.css"><!-- hexo injector head_end start --><link rel="stylesheet" href="/flashcard-assets/flashcard.css"><link rel="stylesheet" href="/vendor/tag-plugins-plus/font-awesome-animation.min.css" media="defer" onload="this.media='all'"><link rel="stylesheet" href="/vendor/tag-plugins-plus/tag-plugins.css" media="defer" onload="this.media='all'"><script src="/vendor/tag-plugins-plus/carousel-touch.js"></script><!-- hexo injector head_end end --><meta name="generator" content="Hexo 8.1.2"></head><body><div class="bg-animation" id="web_bg" style="background-image: url(/img/background.jpg);"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/sisyphus-vale-avatar.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">232</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">157</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">23</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><span class="site-page group hide"><i class="fa-fw fas fa-book"></i><span> 文章</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/learn-topic/"><i class="fa-fw fas fa-graduation-cap"></i><span> 复习</span></a></div><div class="menus_item"><a class="site-page" href="/video/"><i class="fa-fw fas fa-video"></i><span> 视频</span></a></div><div class="menus_item"><a class="site-page" href="/wallpaper/"><i class="fa-fw fas fa-image"></i><span> 照片</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(/img/learn-topic/testing-basics/course-cover.png);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮'𝓼 𝓦𝓸𝓻𝓴𝓢𝓹𝓪𝓬𝓮</span></a><a class="nav-page-title" href="/"><span class="site-name">测试基础(十四)缺陷管理与测试报告</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><span class="site-page group hide"><i class="fa-fw fas fa-book"></i><span> 文章</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/learn-topic/"><i class="fa-fw fas fa-graduation-cap"></i><span> 复习</span></a></div><div class="menus_item"><a class="site-page" href="/video/"><i class="fa-fw fas fa-video"></i><span> 视频</span></a></div><div class="menus_item"><a class="site-page" href="/wallpaper/"><i class="fa-fw fas fa-image"></i><span> 照片</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">测试基础(十四)缺陷管理与测试报告<a class="post-edit-link" href="https://github.com/koco-co/hexo-blog/edit/main/source/_posts/learn-topic/testing-basics/测试基础(十四)缺陷管理与测试报告.md" title="编辑" target="_blank"><i class="fas fa-pencil-alt"></i></a></h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-05-26T16:00:00.000Z" title="发表于 2026-05-27 00:00:00">2026-05-27</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-08-29T15:00:10.023Z" title="更新于 2026-08-29 23:00:10">2026-08-29</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Learn-Topic/">Learn Topic</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Learn-Topic/%E6%B5%8B%E8%AF%95%E5%9F%BA%E7%A1%80/">测试基础</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">3.1k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>9分钟</span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><nav class="course-series-nav" aria-label="测试基础 文章进度"><div class="course-series-nav__header"><div class="course-series-nav__heading"><strong>测试基础 文章进度</strong></div></div><div class="course-series-nav__progress" role="progressbar" aria-label="文章进度" aria-valuemin="1" aria-valuemax="18" aria-valuenow="14"><span style="width: 77.7778%"></span></div><ol class="course-series-nav__list"><li class="course-series-nav__item"><a href="/posts/3acc7773/"><span class="course-series-nav__index">01</span><span class="course-series-nav__title">测试基础(一)入门路线</span></a></li><li class="course-series-nav__item"><a href="/posts/90ac9409/"><span class="course-series-nav__index">02</span><span class="course-series-nav__title">测试基础(二)测试原理与质量观</span></a></li><li class="course-series-nav__item"><a href="/posts/562e1ecf/"><span class="course-series-nav__index">03</span><span class="course-series-nav__title">测试基础(三)研发流程与敏捷协作</span></a></li><li class="course-series-nav__item"><a href="/posts/f6e019d6/"><span class="course-series-nav__index">04</span><span class="course-series-nav__title">测试基础(四)需求分析与静态评审</span></a></li><li class="course-series-nav__item"><a href="/posts/cb5d3b8f/"><span class="course-series-nav__index">05</span><span class="course-series-nav__title">测试基础(五)测试计划与风险管理</span></a></li><li class="course-series-nav__item"><a href="/posts/cd81672d/"><span class="course-series-nav__index">06</span><span class="course-series-nav__title">测试基础(六)功能测试用例设计</span></a></li><li class="course-series-nav__item"><a href="/posts/69145da7/"><span class="course-series-nav__index">07</span><span class="course-series-nav__title">测试基础(七)输入域与边界测试</span></a></li><li class="course-series-nav__item"><a href="/posts/ed62e469/"><span class="course-series-nav__index">08</span><span class="course-series-nav__title">测试基础(八)规则组合与判定测试</span></a></li><li class="course-series-nav__item"><a href="/posts/7677ef32/"><span class="course-series-nav__index">09</span><span class="course-series-nav__title">测试基础(九)状态迁移与业务流程</span></a></li><li class="course-series-nav__item"><a href="/posts/c75ad281/"><span class="course-series-nav__index">10</span><span class="course-series-nav__title">测试基础(十)功能测试场景训练</span></a></li><li class="course-series-nav__item"><a href="/posts/1d4f3128/"><span class="course-series-nav__index">11</span><span class="course-series-nav__title">测试基础(十一)探索式测试</span></a></li><li class="course-series-nav__item"><a href="/posts/b597e925/"><span class="course-series-nav__index">12</span><span class="course-series-nav__title">测试基础(十二)白盒测试与覆盖率</span></a></li><li class="course-series-nav__item"><a href="/posts/69978da/"><span class="course-series-nav__index">13</span><span class="course-series-nav__title">测试基础(十三)非功能测试补充</span></a></li><li class="course-series-nav__item is-current"><a href="/posts/adb68b7b/" aria-current="page"><span class="course-series-nav__index">14</span><span class="course-series-nav__title">测试基础(十四)缺陷管理与测试报告</span></a></li><li class="course-series-nav__item"><a href="/posts/269e708b/"><span class="course-series-nav__index">15</span><span class="course-series-nav__title">测试基础(十五)发布验证与维护测试</span></a></li><li class="course-series-nav__item"><a href="/posts/b843aa71/"><span class="course-series-nav__index">16</span><span class="course-series-nav__title">测试基础(十六)自动化测试策略</span></a></li><li class="course-series-nav__item"><a href="/posts/69e11ff/"><span class="course-series-nav__index">17</span><span class="course-series-nav__title">测试基础(十七)进阶路线</span></a></li><li class="course-series-nav__item"><a href="/posts/1462056d/"><span class="course-series-nav__index">18</span><span class="course-series-nav__title">测试基础(十八)综合实战</span></a></li></ol></nav>
+
+<div class="note info flat"><p>缺陷报告把“实际观察”与“预期规则”连接起来，测试报告则把执行范围、结果和剩余风险交给不同消费者。两者都要可复现、可追踪、不过度推断；发现问题不等于已经定位根因，测试通过也不等于可以发布。</p>
+</div>
+
+<h2 id="缺陷判断"><a href="#缺陷判断" class="headerlink" title="缺陷判断"></a>缺陷判断</h2><h3 id="预期与实际"><a href="#预期与实际" class="headerlink" title="预期与实际"></a>预期与实际</h3><table>
+<thead>
+<tr>
+<th>要素</th>
+<th>例子</th>
+<th>不能省略</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>预期</td>
+<td>冻结会员不得建立会话</td>
+<td>依据哪条规则&#x2F;版本</td>
+</tr>
+<tr>
+<td>实际</td>
+<td>冻结会员进入首页且产生会话</td>
+<td>真实观察与数据</td>
+</tr>
+<tr>
+<td>差异</td>
+<td>状态和会话不符合约定</td>
+<td>是否可重复</td>
+</tr>
+<tr>
+<td>分类</td>
+<td>产品缺陷、环境阻塞、需求未决</td>
+<td>归因证据</td>
+</tr>
+</tbody></table>
+<div class="note primary flat"><p>先确认前置和预期，再判断是否是产品缺陷。数据初始化失败、环境服务不可达或需求尚未决定时，应分别标记阻塞或待澄清，不能为了让统计表有一条缺陷而强行归因。</p>
+</div>
+
+<h3 id="问题分类"><a href="#问题分类" class="headerlink" title="问题分类"></a>问题分类</h3><table>
+<thead>
+<tr>
+<th>分类</th>
+<th>判断依据</th>
+<th>处理出口</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>实现缺陷</td>
+<td>在固定版本、数据和环境下稳定违反已确认规则</td>
+<td>建立缺陷并保留复现证据</td>
+</tr>
+<tr>
+<td>环境阻塞</td>
+<td>依赖不可达、夹具损坏或权限不足导致无法执行</td>
+<td>标记阻塞，记录责任人与恢复条件</td>
+</tr>
+<tr>
+<td>需求疑问</td>
+<td>预期规则尚未批准或多个文档冲突</td>
+<td>发起澄清，不用猜测结果判缺陷</td>
+</tr>
+</tbody></table>
+<h2 id="缺陷报告"><a href="#缺陷报告" class="headerlink" title="缺陷报告"></a>缺陷报告</h2><h3 id="复现与证据"><a href="#复现与证据" class="headerlink" title="复现与证据"></a>复现与证据</h3><table>
+<thead>
+<tr>
+<th>字段</th>
+<th>好的写法</th>
+<th>边界</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>标题</td>
+<td>冻结会员提交正确密码仍建立会话</td>
+<td>包含对象、条件、结果</td>
+</tr>
+<tr>
+<td>环境</td>
+<td>build-12、测试环境、账号状态 frozen</td>
+<td>不贴真实密钥&#x2F;个人数据</td>
+</tr>
+<tr>
+<td>步骤</td>
+<td>创建账号→冻结→提交→检查会话</td>
+<td>另一人能重做</td>
+</tr>
+<tr>
+<td>预期&#x2F;实际</td>
+<td>无会话；实际有会话</td>
+<td>使用可判定值</td>
+</tr>
+<tr>
+<td>证据</td>
+<td>请求 ID、响应摘要、日志位置</td>
+<td>附件先脱敏</td>
+</tr>
+<tr>
+<td>严重度&#x2F;优先级</td>
+<td>影响与处理时机分别说明</td>
+<td>不混成同一标签</td>
+</tr>
+</tbody></table>
+<p><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/learn-topic/testing-basics/test-execution-outputs.png" alt="测试执行结果、日志和附件组成可追踪证据" title="测试执行输出"><br><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/learn-topic/testing-basics/defect-statuses.png" alt="缺陷从新建到关闭、拒绝或重新打开的状态" title="缺陷状态"></p>
+<div class="note info flat"><p>图示作用：第一张图提醒把版本、步骤、日志和附件放在同一证据链；第二张图提醒状态会因复现结果和责任决定而分流。图片是记忆辅助，不替代下面的可执行字段和状态判据。</p>
+</div>
+
+<div class="note warning flat"><p>“无法复现”不是结论终点。先补版本、时间、数据、随机种子、网络和日志，再区分偶现、环境差异、竞态或修复后不再出现；不要要求测试者凭感觉把所有偶现都改写成稳定缺陷。</p>
+</div>
+
+<table>
+<thead>
+<tr>
+<th>复现字段</th>
+<th>固定示例</th>
+<th>可核对结果</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>版本&#x2F;环境</td>
+<td><code>build-12</code>、测试环境、UTC、Chrome 128</td>
+<td>另一位测试者可使用同一环境</td>
+</tr>
+<tr>
+<td>合成数据</td>
+<td>账号 <code>M2</code> 状态 frozen，使用测试夹具提供的有效凭据（不记录凭据值），会话为空</td>
+<td>前置快照与清理步骤可重做</td>
+</tr>
+<tr>
+<td>步骤 1</td>
+<td>清理旧会话，确认账号 <code>M2</code> 状态为 frozen</td>
+<td>前置快照显示冻结状态</td>
+</tr>
+<tr>
+<td>步骤 2</td>
+<td>在登录表单输入夹具提供的有效凭据并提交，请求 ID <code>req-401</code></td>
+<td>记录响应码、正文摘要和时间</td>
+</tr>
+<tr>
+<td>步骤 3</td>
+<td>查询登录会话并尝试进入受保护入口</td>
+<td>记录会话状态和入口响应</td>
+</tr>
+<tr>
+<td>预期</td>
+<td>查询登录会话并尝试进入受保护入口</td>
+<td>无会话且不能进入受保护入口</td>
+</tr>
+<tr>
+<td>实际（合成失败样例，非真实执行）</td>
+<td>同一 <code>build-12</code> 样例响应 HTTP 200，生成会话 <code>sess-401</code> 并进入受保护入口</td>
+<td>该明确差异作为缺陷正文；真实执行时用脱敏响应和实际会话 ID 替换</td>
+</tr>
+<tr>
+<td>重复与证据</td>
+<td>同一夹具连续执行 3 次，保存脱敏日志 <code>evidence/defect-401.log</code></td>
+<td><code>3/3</code> 重现才标稳定；偶现写概率和触发条件</td>
+</tr>
+</tbody></table>
+<h3 id="严重度与优先级"><a href="#严重度与优先级" class="headerlink" title="严重度与优先级"></a>严重度与优先级</h3><table>
+<thead>
+<tr>
+<th>维度</th>
+<th>要回答的问题</th>
+<th>例子</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>严重度</td>
+<td>影响范围、数据损害和可用性有多大</td>
+<td>支付重复扣款为高影响</td>
+</tr>
+<tr>
+<td>优先级</td>
+<td>在当前发布窗口何时处理</td>
+<td>低概率但合规阻断可排 P1</td>
+</tr>
+<tr>
+<td>证据</td>
+<td>为什么这样判断</td>
+<td>受影响用户、复现概率和业务负责人</td>
+</tr>
+</tbody></table>
+<h2 id="处理闭环"><a href="#处理闭环" class="headerlink" title="处理闭环"></a>处理闭环</h2><h3 id="状态与沟通"><a href="#状态与沟通" class="headerlink" title="状态与沟通"></a>状态与沟通</h3><div class="mermaid-wrap"><pre class="mermaid-src" data-config="{}" hidden>
+    flowchart LR
+  N[新建：预期≠实际] --&gt; T[分派与澄清]
+  T --&gt; F[修复或决定不修]
+  F --&gt; R[修复确认：原步骤]
+  R --&gt; G[回归：受影响范围]
+  G --&gt; C{结果}
+  C --&gt;|通过| K[关闭并保留证据]
+  C --&gt;|失败| O[重新打开并补充差异]
+  T --&gt; D[拒绝&#x2F;重复&#x2F;环境阻塞]
+  </pre></div>
+
+<table>
+<thead>
+<tr>
+<th>状态</th>
+<th>进入判据</th>
+<th>退出或处理判据</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>新建</td>
+<td>固定前置下实际结果违反已确认规则</td>
+<td>分派、澄清或补充复现证据</td>
+</tr>
+<tr>
+<td>拒绝&#x2F;不修</td>
+<td>重复、超出范围、预期规则不成立，且有责任人决定</td>
+<td>记录理由和关联项，不计作已修复</td>
+</tr>
+<tr>
+<td>环境阻塞</td>
+<td>依赖不可达、数据&#x2F;权限夹具损坏，无法判断产品行为</td>
+<td>环境恢复后重跑，或由责任人接受风险</td>
+</tr>
+<tr>
+<td>延后</td>
+<td>已确认问题但当前发布窗口不处理</td>
+<td>记录版本、补偿措施、截止时间和负责人</td>
+</tr>
+<tr>
+<td>待澄清</td>
+<td>需求冲突或验收规则未批准</td>
+<td>产品&#x2F;领域责任人确认后再判定</td>
+</tr>
+<tr>
+<td>重新打开</td>
+<td>原步骤仍失败，或回归发现同一问题&#x2F;新差异</td>
+<td>关联新证据，回到分派与澄清</td>
+</tr>
+</tbody></table>
+<div class="note info flat"><p>修复确认只回答原问题是否消失，回归还要检查变更影响的相关行为。状态转换应记录决定人和证据；关闭缺陷时保留版本、环境、执行结果和未覆盖条件，而不是只改一个状态字段。</p>
+</div>
+
+<h3 id="修复确认"><a href="#修复确认" class="headerlink" title="修复确认"></a>修复确认</h3><div class="note info flat"><p>修复确认重跑原失败步骤和同一前置数据，确认实际结果回到预期；随后按影响范围执行回归。若原问题仍存在或出现新的可复现差异，重新打开并关联新证据，不以开发者口头说明替代执行结果。</p>
+</div>
+
+<h2 id="测试报告"><a href="#测试报告" class="headerlink" title="测试报告"></a>测试报告</h2><h3 id="进展与完成"><a href="#进展与完成" class="headerlink" title="进展与完成"></a>进展与完成</h3><table>
+<thead>
+<tr>
+<th>报告部分</th>
+<th>应回答</th>
+<th>不应声称</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>范围与环境</td>
+<td>测了什么版本、入口、数据和限制</td>
+<td>覆盖了所有行为</td>
+</tr>
+<tr>
+<td>进展与结果</td>
+<td>执行&#x2F;通过&#x2F;失败&#x2F;阻塞的定义和数量</td>
+<td>通过率等于质量分数</td>
+</tr>
+<tr>
+<td>风险与缺陷</td>
+<td>高影响问题、未决项、责任人</td>
+<td>根因已经确定（若未分析）</td>
+</tr>
+<tr>
+<td>发布建议</td>
+<td>条件、证据和剩余风险</td>
+<td>“没有缺陷”或无条件放行</td>
+</tr>
+</tbody></table>
+<div class="note primary flat"><p>面向开发者突出可复现步骤，面向管理者突出风险和决定，面向发布者突出准出条件和回退方案。同一组结果可以有不同摘要，但底层版本、范围和证据必须一致。</p>
+</div>
+
+<table>
+<thead>
+<tr>
+<th>固定报告样例（<code>build-12</code>）</th>
+<th align="right">数量</th>
+<th>统计口径</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>计划用例</td>
+<td align="right">24</td>
+<td>含所有本轮计划项</td>
+</tr>
+<tr>
+<td>已执行</td>
+<td align="right">20</td>
+<td>分母只计实际执行；环境阻塞 3 条单列</td>
+</tr>
+<tr>
+<td>通过&#x2F;失败</td>
+<td align="right">18 &#x2F; 2</td>
+<td>执行通过率 <code>18/20=90%</code>，不是质量分数</td>
+</tr>
+<tr>
+<td>环境阻塞&#x2F;未执行</td>
+<td align="right">3 &#x2F; 1</td>
+<td>不放进通过率分母，写明依赖和未测范围</td>
+</tr>
+<tr>
+<td>发布风险</td>
+<td align="right">1 个高影响失败 + 3 个阻塞</td>
+<td>指向缺陷 ID、责任人和风险接受状态</td>
+</tr>
+</tbody></table>
+<div class="note warning flat"><p>报告必须同时写分子、分母、排除项和未测范围：上例的 <code>90%</code> 只回答 20 条已执行用例中有多少通过，不能推出 24 条计划项全部安全，更不能掩盖 1 个高影响失败和 3 个环境阻塞。</p>
+</div>
+
+<h3 id="指标与受众"><a href="#指标与受众" class="headerlink" title="指标与受众"></a>指标与受众</h3><table>
+<thead>
+<tr>
+<th>受众</th>
+<th>优先信息</th>
+<th>指标边界</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>开发者</td>
+<td>最小复现、接口&#x2F;日志和实际差异</td>
+<td>不把通过率当根因</td>
+</tr>
+<tr>
+<td>管理者</td>
+<td>高风险、阻塞、剩余风险和决定</td>
+<td>说明分母、范围和时间</td>
+</tr>
+<tr>
+<td>发布者</td>
+<td>准出条件、回退点和责任人</td>
+<td>未测项必须显式列出</td>
+</tr>
+</tbody></table>
+<h2 id="沟通取舍"><a href="#沟通取舍" class="headerlink" title="沟通取舍"></a>沟通取舍</h2><h3 id="证据不足"><a href="#证据不足" class="headerlink" title="证据不足"></a>证据不足</h3><div class="note success flat"><p>当信息不足时，最诚实的结论是“当前证据不足以判定”。给出下一步：补环境、澄清规则、增加用例或由责任人接受风险。明确不确定性比用一个绿色状态掩盖失败更能帮助决策。</p>
+</div>
+
+<h3 id="风险接受"><a href="#风险接受" class="headerlink" title="风险接受"></a>风险接受</h3><div class="note primary flat"><p>测试者可以提出风险与证据，不能代替产品或发布责任人授权放行。若决定接受未修复问题，记录风险描述、影响、补偿措施、接受者和失效条件；没有明确接受者时保持“待决定”，不要写成通过。</p>
+</div>
+
+<h2 id="常见问题"><a href="#常见问题" class="headerlink" title="常见问题"></a>常见问题</h2><article class="hfc-flip hfc-inline" data-hfc-flip data-hfc-inline data-card-id="testing-basics-a14-concept-1" tabindex="0">
+
+  <div class="hfc-flip__inner" data-hfc-flip-inner>
+    <div class="hfc-face hfc-face--front" data-hfc-face="front">
+      <div class="hfc-card-head"><span class="hfc-number">Q01</span><a class="hfc-priority hfc-priority--2" href="/learn-topic/?priority=2" title="筛选中频题" aria-label="筛选中频题">中频</a></div>
+      <div class="hfc-topics"><a class="hfc-topic" href="/learn-topic/?deck=%E6%B5%8B%E8%AF%95%E5%9F%BA%E7%A1%80">#测试基础</a><a class="hfc-topic" href="/learn-topic/?tag=%E7%BC%BA%E9%99%B7%E6%8A%A5%E5%91%8A">#缺陷报告</a><a class="hfc-topic" href="/learn-topic/?tag=%E5%A4%8D%E7%8E%B0">#复现</a></div>
+      <div class="hfc-question"><p>开发说无法复现时，测试者怎么办？</p>
+</div>
+      <span class="hfc-flip-hint">点击查看答案</span>
+    </div>
+    <div class="hfc-face hfc-face--back" data-hfc-face="back" aria-hidden="true">
+      <div class="hfc-card-head"><span class="hfc-number">Q01</span><a class="hfc-priority hfc-priority--2" href="/learn-topic/?priority=2" title="筛选中频题" aria-label="筛选中频题">中频</a></div>
+      <div class="hfc-topics"><a class="hfc-topic" href="/learn-topic/?deck=%E6%B5%8B%E8%AF%95%E5%9F%BA%E7%A1%80">#测试基础</a><a class="hfc-topic" href="/learn-topic/?tag=%E7%BC%BA%E9%99%B7%E6%8A%A5%E5%91%8A">#缺陷报告</a><a class="hfc-topic" href="/learn-topic/?tag=%E5%A4%8D%E7%8E%B0">#复现</a></div>
+      <div class="hfc-back-question"><strong>问题:</strong><div class="hfc-back-question__content"><p>开发说无法复现时，测试者怎么办？</p>
+</div></div>
+      <div class="hfc-answer-section"><strong>回答：</strong><div><p>补齐版本、环境、数据、步骤和证据，尝试最小复现并区分偶现、环境阻塞和真实产品差异。</p>
+</div></div>
+      <div class="hfc-explanation-section"><strong>解析：</strong><div><p>先保存原始失败的时间、构建、账号状态、输入、日志和请求 ID，再在同一条件重跑；若只在并发或特定时区出现，记录触发条件和可控种子。无法再次出现不等于缺陷不存在，也不等于一定是产品问题；应把复现概率、已排除条件和下一步观察写进报告。敏感附件先脱敏。</p>
+</div></div>
+      
+    </div>
+  </div>
+</article>
+
+<article class="hfc-flip hfc-inline" data-hfc-flip data-hfc-inline data-card-id="testing-basics-a14-concept-2" tabindex="0">
+
+  <div class="hfc-flip__inner" data-hfc-flip-inner>
+    <div class="hfc-face hfc-face--front" data-hfc-face="front">
+      <div class="hfc-card-head"><span class="hfc-number">Q02</span><a class="hfc-priority hfc-priority--2" href="/learn-topic/?priority=2" title="筛选中频题" aria-label="筛选中频题">中频</a></div>
+      <div class="hfc-topics"><a class="hfc-topic" href="/learn-topic/?deck=%E6%B5%8B%E8%AF%95%E5%9F%BA%E7%A1%80">#测试基础</a><a class="hfc-topic" href="/learn-topic/?tag=%E4%B8%A5%E9%87%8D%E5%BA%A6">#严重度</a><a class="hfc-topic" href="/learn-topic/?tag=%E4%BC%98%E5%85%88%E7%BA%A7">#优先级</a></div>
+      <div class="hfc-question"><p>缺陷严重程度和处理优先级怎么区分？</p>
+</div>
+      <span class="hfc-flip-hint">点击查看答案</span>
+    </div>
+    <div class="hfc-face hfc-face--back" data-hfc-face="back" aria-hidden="true">
+      <div class="hfc-card-head"><span class="hfc-number">Q02</span><a class="hfc-priority hfc-priority--2" href="/learn-topic/?priority=2" title="筛选中频题" aria-label="筛选中频题">中频</a></div>
+      <div class="hfc-topics"><a class="hfc-topic" href="/learn-topic/?deck=%E6%B5%8B%E8%AF%95%E5%9F%BA%E7%A1%80">#测试基础</a><a class="hfc-topic" href="/learn-topic/?tag=%E4%B8%A5%E9%87%8D%E5%BA%A6">#严重度</a><a class="hfc-topic" href="/learn-topic/?tag=%E4%BC%98%E5%85%88%E7%BA%A7">#优先级</a></div>
+      <div class="hfc-back-question"><strong>问题:</strong><div class="hfc-back-question__content"><p>缺陷严重程度和处理优先级怎么区分？</p>
+</div></div>
+      <div class="hfc-answer-section"><strong>回答：</strong><div><p>严重程度描述影响大小，优先级描述在当前资源、风险和发布目标下何时处理；二者可以不同。</p>
+</div></div>
+      <div class="hfc-explanation-section"><strong>解析：</strong><div><p>数据泄露通常严重度高且优先级高；低概率但必须支持的旧环境问题可能严重度中等、当前优先级高；仅影响内部测试文案的问题可能严重度低但被发布窗口暂缓。报告分别给出影响、发生条件、修复时机和决定人，不用标签替代理由。</p>
+</div></div>
+      
+    </div>
+  </div>
+</article>
+
+<article class="hfc-flip hfc-inline" data-hfc-flip data-hfc-inline data-card-id="testing-basics-a14-concept-3" tabindex="0">
+
+  <div class="hfc-flip__inner" data-hfc-flip-inner>
+    <div class="hfc-face hfc-face--front" data-hfc-face="front">
+      <div class="hfc-card-head"><span class="hfc-number">Q03</span><a class="hfc-priority hfc-priority--2" href="/learn-topic/?priority=2" title="筛选中频题" aria-label="筛选中频题">中频</a></div>
+      <div class="hfc-topics"><a class="hfc-topic" href="/learn-topic/?deck=%E6%B5%8B%E8%AF%95%E5%9F%BA%E7%A1%80">#测试基础</a><a class="hfc-topic" href="/learn-topic/?tag=%E5%8F%91%E5%B8%83">#发布</a><a class="hfc-topic" href="/learn-topic/?tag=%E9%A3%8E%E9%99%A9">#风险</a></div>
+      <div class="hfc-question"><p>通过率高为什么不一定能发布？</p>
+</div>
+      <span class="hfc-flip-hint">点击查看答案</span>
+    </div>
+    <div class="hfc-face hfc-face--back" data-hfc-face="back" aria-hidden="true">
+      <div class="hfc-card-head"><span class="hfc-number">Q03</span><a class="hfc-priority hfc-priority--2" href="/learn-topic/?priority=2" title="筛选中频题" aria-label="筛选中频题">中频</a></div>
+      <div class="hfc-topics"><a class="hfc-topic" href="/learn-topic/?deck=%E6%B5%8B%E8%AF%95%E5%9F%BA%E7%A1%80">#测试基础</a><a class="hfc-topic" href="/learn-topic/?tag=%E5%8F%91%E5%B8%83">#发布</a><a class="hfc-topic" href="/learn-topic/?tag=%E9%A3%8E%E9%99%A9">#风险</a></div>
+      <div class="hfc-back-question"><strong>问题:</strong><div class="hfc-back-question__content"><p>通过率高为什么不一定能发布？</p>
+</div></div>
+      <div class="hfc-answer-section"><strong>回答：</strong><div><p>通过率只描述已执行用例的结果；关键风险可能未覆盖，阻塞项、严重缺陷或环境差异仍可能使发布不安全。</p>
+</div></div>
+      <div class="hfc-explanation-section"><strong>解析：</strong><div><p>如果 100 条低风险用例通过，却没有执行冻结账户、支付超时或数据恢复，分子&#x2F;分母都不能代表发布风险。发布判断应结合高风险证据、严重缺陷处置、未测范围、环境和回退能力；剩余风险需要明确接受者。通过率可作为趋势指标，不能单独作为放行门槛。</p>
+</div></div>
+      
+    </div>
+  </div>
+</article>
+
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><div class="link-group"><div class="tag link"><a class="link-card" title="ISTQB CTFL v4.0.1" target="_blank" rel="noopener" href="https://istqb.org/wp-content/uploads/2024/11/ISTQB_CTFL_Syllabus_v4.0.1.pdf"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://istqb.org/wp-content/uploads/2024/10/cropped-favicon-32x32.png"/></div><div class="right"><p class="text">ISTQB CTFL v4.0.1</p><p class="url">https://istqb.org/wp-content/uploads/2024/11/ISTQB_CTFL_Syllabus_v4.0.1.pdf</p></div></a></div></div>
+
+<div class="hfc-article-cta" data-hfc-article-cta data-hfc-article-count="3"><a class="hfc-button hfc-button--primary" href="/learn-topic/?article=_posts%2Flearn-topic%2Ftesting-basics%2F%E6%B5%8B%E8%AF%95%E5%9F%BA%E7%A1%80(%E5%8D%81%E5%9B%9B)%E7%BC%BA%E9%99%B7%E7%AE%A1%E7%90%86%E4%B8%8E%E6%B5%8B%E8%AF%95%E6%8A%A5%E5%91%8A.md" title="复习本篇 · 3 张卡片" aria-label="复习本篇 · 3 张卡片"><i class="fas fa-graduation-cap hfc-review-icon" aria-hidden="true"></i><span class="hfc-review-label">复习</span><span class="hfc-review-detail">本篇 · 3 张卡片</span></a></div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://koco-co.github.io">𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://koco-co.github.io/posts/adb68b7b/">https://koco-co.github.io/posts/adb68b7b/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://koco-co.github.io" target="_blank">𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮'𝓼 𝓦𝓸𝓻𝓴𝓢𝓹𝓪𝓬𝓮</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0/">系统学习</a><a class="post-meta__tags" href="/tags/%E6%B5%8B%E8%AF%95%E5%9F%BA%E7%A1%80/">测试基础</a></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞助</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechat.jpeg" target="_blank"><img class="post-qr-code-img" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/wechat.jpeg"/></a><div class="post-qr-code-desc"></div></li><li class="reward-item"><a href="/img/alipay.jpeg" target="_blank"><img class="post-qr-code-img" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/alipay.jpeg"/></a><div class="post-qr-code-desc"></div></li></ul></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/269e708b/" title="测试基础(十五)发布验证与维护测试"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/learn-topic/testing-basics/course-cover.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">测试基础(十五)发布验证与维护测试</div></div><div class="info-2"><div class="info-item-1">验证变更并控制发布后的功能风险，提出有证据的回归范围、发布检查和回退验证。</div></div></div></a><a class="pagination-related" href="/posts/69978da/" title="测试基础(十三)非功能测试补充"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/learn-topic/testing-basics/course-cover.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">测试基础(十三)非功能测试补充</div></div><div class="info-2"><div class="info-item-1">在功能用例后识别需要补充的质量风险，为同一功能场景追加有理由的非功能检查点与转交条件。</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/1d4f3128/" title="测试基础(十一)探索式测试"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/learn-topic/testing-basics/course-cover.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-05-24</div><div class="info-item-2">测试基础(十一)探索式测试</div></div><div class="info-2"><div class="info-item-1">通过有目的的探索发现模型遗漏，执行一场限时探索并提交可复盘记录。</div></div></div></a><a class="pagination-related" href="/posts/f6e019d6/" title="测试基础(四)需求分析与静态评审"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/learn-topic/testing-basics/course-cover.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-05-17</div><div class="info-item-2">测试基础(四)需求分析与静态评审</div></div><div class="info-2"><div class="info-item-1">把含糊需求变成测试依据，产出问题清单、验收条件和追踪关系。</div></div></div></a><a class="pagination-related" href="/posts/3acc7773/" title="测试基础(一)入门路线"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/learn-topic/testing-basics/course-cover.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-05-14</div><div class="info-item-2">测试基础(一)入门路线</div></div><div class="info-2"><div class="info-item-1">安排功能用例设计学习顺序，明确先读什么、先练什么和何时完成。</div></div></div></a><a class="pagination-related" href="/posts/269e708b/" title="测试基础(十五)发布验证与维护测试"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/learn-topic/testing-basics/course-cover.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-05-28</div><div class="info-item-2">测试基础(十五)发布验证与维护测试</div></div><div class="info-2"><div class="info-item-1">验证变更并控制发布后的功能风险，提出有证据的回归范围、发布检查和回退验证。</div></div></div></a><a class="pagination-related" href="/posts/ed62e469/" title="测试基础(八)规则组合与判定测试"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/learn-topic/testing-basics/course-cover.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-05-21</div><div class="info-item-2">测试基础(八)规则组合与判定测试</div></div><div class="info-2"><div class="info-item-1">把多条件业务规则转换成可验证组合，产出可追踪判定表和一组有依据的功能用例。</div></div></div></a><a class="pagination-related" href="/posts/69145da7/" title="测试基础(七)输入域与边界测试"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/learn-topic/testing-basics/course-cover.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-05-20</div><div class="info-item-2">测试基础(七)输入域与边界测试</div></div><div class="info-2"><div class="info-item-1">用有限输入代表输入域并覆盖边界，从范围和格式约束推导数据集并解释覆盖口径。</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/sisyphus-vale-avatar.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮</div><div class="author-info-description">身如柳絮随风扬 无论云泥意贯一</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">232</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">157</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">23</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/koco-co"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons"><a class="social-icon" href="mailto:kopohub@gmail.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a><a class="social-icon" href="https://v.douyin.com/uk6DHVS-OrI" target="_blank" title="TikTok"><i class="fab fa-tiktok"></i></a><a class="social-icon" href="https://space.bilibili.com/3546823172033014" target="_blank" title="Bilibili"><i class="fas fa-tv"></i></a><a class="social-icon" href="https://x.com/SugerQvQ" target="_blank" title="X"><i class="fab fa-x-twitter"></i></a><a class="social-icon" href="https://steamcommunity.com/profiles/76561199483116375/" target="_blank" title="Steam"><i class="fab fa-steam"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">欢迎来到 Sisyphus Vale。这里记录技术实践、系统学习与日常思考。</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BC%BA%E9%99%B7%E5%88%A4%E6%96%AD"><span class="toc-number">1.</span> <span class="toc-text">缺陷判断</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A2%84%E6%9C%9F%E4%B8%8E%E5%AE%9E%E9%99%85"><span class="toc-number">1.1.</span> <span class="toc-text">预期与实际</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%97%AE%E9%A2%98%E5%88%86%E7%B1%BB"><span class="toc-number">1.2.</span> <span class="toc-text">问题分类</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BC%BA%E9%99%B7%E6%8A%A5%E5%91%8A"><span class="toc-number">2.</span> <span class="toc-text">缺陷报告</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%8D%E7%8E%B0%E4%B8%8E%E8%AF%81%E6%8D%AE"><span class="toc-number">2.1.</span> <span class="toc-text">复现与证据</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%A5%E9%87%8D%E5%BA%A6%E4%B8%8E%E4%BC%98%E5%85%88%E7%BA%A7"><span class="toc-number">2.2.</span> <span class="toc-text">严重度与优先级</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%84%E7%90%86%E9%97%AD%E7%8E%AF"><span class="toc-number">3.</span> <span class="toc-text">处理闭环</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%8A%B6%E6%80%81%E4%B8%8E%E6%B2%9F%E9%80%9A"><span class="toc-number">3.1.</span> <span class="toc-text">状态与沟通</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BF%AE%E5%A4%8D%E7%A1%AE%E8%AE%A4"><span class="toc-number">3.2.</span> <span class="toc-text">修复确认</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95%E6%8A%A5%E5%91%8A"><span class="toc-number">4.</span> <span class="toc-text">测试报告</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%9B%E5%B1%95%E4%B8%8E%E5%AE%8C%E6%88%90"><span class="toc-number">4.1.</span> <span class="toc-text">进展与完成</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8C%87%E6%A0%87%E4%B8%8E%E5%8F%97%E4%BC%97"><span class="toc-number">4.2.</span> <span class="toc-text">指标与受众</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B2%9F%E9%80%9A%E5%8F%96%E8%88%8D"><span class="toc-number">5.</span> <span class="toc-text">沟通取舍</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AF%81%E6%8D%AE%E4%B8%8D%E8%B6%B3"><span class="toc-number">5.1.</span> <span class="toc-text">证据不足</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A3%8E%E9%99%A9%E6%8E%A5%E5%8F%97"><span class="toc-number">5.2.</span> <span class="toc-text">风险接受</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98"><span class="toc-number">6.</span> <span class="toc-text">常见问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-number">7.</span> <span class="toc-text">参考资料</span></a></li></ol></div></div><div class="card-widget card-post-series"><div class="item-headline"><i class="fa-solid fa-layer-group"></i><span>系列文章</span></div><div class="aside-list"><div class="aside-list-item"><div class="content"><a class="title" href="/posts/1462056d/" title="测试基础(十八)综合实战">测试基础(十八)综合实战</a><time datetime="2026-05-30T16:00:00.000Z" title="发表于 2026-05-31 00:00:00">2026-05-31</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/69e11ff/" title="测试基础(十七)进阶路线">测试基础(十七)进阶路线</a><time datetime="2026-05-29T16:00:00.000Z" title="发表于 2026-05-30 00:00:00">2026-05-30</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/b843aa71/" title="测试基础(十六)自动化测试策略">测试基础(十六)自动化测试策略</a><time datetime="2026-05-28T16:00:00.000Z" title="发表于 2026-05-29 00:00:00">2026-05-29</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/269e708b/" title="测试基础(十五)发布验证与维护测试">测试基础(十五)发布验证与维护测试</a><time datetime="2026-05-27T16:00:00.000Z" title="发表于 2026-05-28 00:00:00">2026-05-28</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/adb68b7b/" title="测试基础(十四)缺陷管理与测试报告">测试基础(十四)缺陷管理与测试报告</a><time datetime="2026-05-26T16:00:00.000Z" title="发表于 2026-05-27 00:00:00">2026-05-27</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/69978da/" title="测试基础(十三)非功能测试补充">测试基础(十三)非功能测试补充</a><time datetime="2026-05-25T16:00:00.000Z" title="发表于 2026-05-26 00:00:00">2026-05-26</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/b597e925/" title="测试基础(十二)白盒测试与覆盖率">测试基础(十二)白盒测试与覆盖率</a><time datetime="2026-05-24T16:00:00.000Z" title="发表于 2026-05-25 00:00:00">2026-05-25</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/1d4f3128/" title="测试基础(十一)探索式测试">测试基础(十一)探索式测试</a><time datetime="2026-05-23T16:00:00.000Z" title="发表于 2026-05-24 00:00:00">2026-05-24</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/c75ad281/" title="测试基础(十)功能测试场景训练">测试基础(十)功能测试场景训练</a><time datetime="2026-05-22T16:00:00.000Z" title="发表于 2026-05-23 00:00:00">2026-05-23</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/7677ef32/" title="测试基础(九)状态迁移与业务流程">测试基础(九)状态迁移与业务流程</a><time datetime="2026-05-21T16:00:00.000Z" title="发表于 2026-05-22 00:00:00">2026-05-22</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/ed62e469/" title="测试基础(八)规则组合与判定测试">测试基础(八)规则组合与判定测试</a><time datetime="2026-05-20T16:00:00.000Z" title="发表于 2026-05-21 00:00:00">2026-05-21</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/69145da7/" title="测试基础(七)输入域与边界测试">测试基础(七)输入域与边界测试</a><time datetime="2026-05-19T16:00:00.000Z" title="发表于 2026-05-20 00:00:00">2026-05-20</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/cd81672d/" title="测试基础(六)功能测试用例设计">测试基础(六)功能测试用例设计</a><time datetime="2026-05-18T16:00:00.000Z" title="发表于 2026-05-19 00:00:00">2026-05-19</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/cb5d3b8f/" title="测试基础(五)测试计划与风险管理">测试基础(五)测试计划与风险管理</a><time datetime="2026-05-17T16:00:00.000Z" title="发表于 2026-05-18 00:00:00">2026-05-18</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/f6e019d6/" title="测试基础(四)需求分析与静态评审">测试基础(四)需求分析与静态评审</a><time datetime="2026-05-16T16:00:00.000Z" title="发表于 2026-05-17 00:00:00">2026-05-17</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/562e1ecf/" title="测试基础(三)研发流程与敏捷协作">测试基础(三)研发流程与敏捷协作</a><time datetime="2026-05-15T16:00:00.000Z" title="发表于 2026-05-16 00:00:00">2026-05-16</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/90ac9409/" title="测试基础(二)测试原理与质量观">测试基础(二)测试原理与质量观</a><time datetime="2026-05-14T16:00:00.000Z" title="发表于 2026-05-15 00:00:00">2026-05-15</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/3acc7773/" title="测试基础(一)入门路线">测试基础(一)入门路线</a><time datetime="2026-05-13T16:00:00.000Z" title="发表于 2026-05-14 00:00:00">2026-05-14</time></div></div></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/posts/df8a8a9e/" title="AI 编程工作流插件选型指南"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/%E6%96%87%E7%AB%A0%E9%9A%8F%E6%9C%BA%E5%B0%81%E9%9D%A203.webp" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="AI 编程工作流插件选型指南"/></a><div class="content"><a class="title" href="/posts/df8a8a9e/" title="AI 编程工作流插件选型指南">AI 编程工作流插件选型指南</a><time datetime="2026-08-27T08:24:15.000Z" title="发表于 2026-08-27 16:24:15">2026-08-27</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/posts/18a17ffa/" title="AI 辅助测试(十二)项目实战"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/ai-assisted-testing-course-cover.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="AI 辅助测试(十二)项目实战"/></a><div class="content"><a class="title" href="/posts/18a17ffa/" title="AI 辅助测试(十二)项目实战">AI 辅助测试(十二)项目实战</a><time datetime="2026-08-20T04:00:00.000Z" title="发表于 2026-08-20 12:00:00">2026-08-20</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/posts/f5e80d23/" title="AI 辅助测试(十一)CI流水线"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/ai-assisted-testing-course-cover.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="AI 辅助测试(十一)CI流水线"/></a><div class="content"><a class="title" href="/posts/f5e80d23/" title="AI 辅助测试(十一)CI流水线">AI 辅助测试(十一)CI流水线</a><time datetime="2026-08-19T16:00:00.000Z" title="发表于 2026-08-20 00:00:00">2026-08-20</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/posts/ca1f50ce/" title="AI 辅助测试(十)测试资产验收"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/ai-assisted-testing-course-cover.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="AI 辅助测试(十)测试资产验收"/></a><div class="content"><a class="title" href="/posts/ca1f50ce/" title="AI 辅助测试(十)测试资产验收">AI 辅助测试(十)测试资产验收</a><time datetime="2026-08-19T04:00:00.000Z" title="发表于 2026-08-19 12:00:00">2026-08-19</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/posts/6c305e52/" title="AI 辅助测试(九)缺陷分析与维护"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/ai-assisted-testing-course-cover.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="AI 辅助测试(九)缺陷分析与维护"/></a><div class="content"><a class="title" href="/posts/6c305e52/" title="AI 辅助测试(九)缺陷分析与维护">AI 辅助测试(九)缺陷分析与维护</a><time datetime="2026-08-18T16:00:00.000Z" title="发表于 2026-08-19 00:00:00">2026-08-19</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By 𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮</span></div><div class="footer_custom_text"><p>本站内容仅供学习与研究使用。部分资料来自互联网，如有侵权或不妥，请联系处理。</p>
+<p><a target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> · <a target="_blank" rel="noopener" href="https://butterfly.js.org/">Butterfly</a> · <a target="_blank" rel="noopener" href="https://github.com/koco-co/hexo-blog">站点源码</a> · <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a></p></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.7.0"></script><script src="/js/main.js?v=5.7.0"></script><script src="/js/tw_cn.js?v=5.7.0"></script><script src="/vendor/butterfly/lazyload/lazyload.iife.min.js"></script><div class="js-pjax"><script>(() => {
+  const parseViewBox = viewBox => {
+    if (!viewBox) return null
+    const parts = viewBox.trim().split(/[\s,]+/).map(n => Number(n))
+    if (parts.length !== 4 || parts.some(n => Number.isNaN(n))) return null
+    return parts
+  }
+
+  const getSvgViewBox = svg => {
+    const attr = parseViewBox(svg.getAttribute('viewBox'))
+    if (attr) return attr
+
+    // Fallback: use bbox to build a viewBox
+    try {
+      const bbox = svg.getBBox()
+      if (bbox && bbox.width && bbox.height) return [bbox.x, bbox.y, bbox.width, bbox.height]
+    } catch (e) {
+      // getBBox may fail on some edge cases; ignore
+    }
+
+    const w = Number(svg.getAttribute('width')) || 0
+    const h = Number(svg.getAttribute('height')) || 0
+    if (w > 0 && h > 0) return [0, 0, w, h]
+    return [0, 0, 100, 100]
+  }
+
+  const setSvgViewBox = (svg, vb) => {
+    svg.setAttribute('viewBox', `${vb[0]} ${vb[1]} ${vb[2]} ${vb[3]}`)
+  }
+
+  const clamp = (v, min, max) => Math.max(min, Math.min(max, v))
+
+  const openSvgInNewTab = ({ source, initViewBox }) => {
+    const getClonedSvg = () => {
+      if (typeof source === 'string') {
+        const template = document.createElement('template')
+        template.innerHTML = source.trim()
+        const svg = template.content.querySelector('svg')
+        return svg ? svg.cloneNode(true) : null
+      }
+      if (source && typeof source.cloneNode === 'function') {
+        return source.cloneNode(true)
+      }
+      return null
+    }
+
+    const clone = getClonedSvg()
+    if (!clone) return
+    if (initViewBox && initViewBox.length === 4) {
+      clone.setAttribute('viewBox', initViewBox.join(' '))
+    }
+    if (!clone.getAttribute('xmlns')) clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+    if (!clone.getAttribute('xmlns:xlink') && clone.innerHTML.includes('xlink:')) {
+      clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink')
+    }
+    // inject background to match current theme
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
+    const bg = getComputedStyle(document.body).backgroundColor || (isDark ? '#1e1e1e' : '#ffffff')
+    if (!clone.style.background) clone.style.background = bg
+
+    const serializer = new XMLSerializer()
+    const svgSource = serializer.serializeToString(clone)
+    const htmlSource = `<!doctype html><html><head><meta charset="utf-8" />
+      <style>
+        html, body { width: 100%; height: 100%; margin: 0; display: flex; align-items: center; justify-content: center; background: ${bg}; }
+        svg { max-width: 100%; max-height: 100%; height: auto; width: auto; }
+      </style>
+      </head><body>${svgSource}</body></html>`
+    const blob = new Blob([htmlSource], { type: 'text/html;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    window.open(url, '_blank', 'noopener')
+
+    setTimeout(() => URL.revokeObjectURL(url), 5000)
+  }
+
+  const attachMermaidViewerButton = wrap => {
+    let btn = wrap.querySelector('.mermaid-open-btn')
+    if (!btn) {
+      btn = document.createElement('button')
+      btn.type = 'button'
+      btn.className = 'mermaid-open-btn'
+      wrap.appendChild(btn)
+    }
+
+    btn.innerHTML = '<i class="fa fa-search fa-fw" aria-hidden="true"></i>'
+
+    if (!btn.__mermaidViewerBound) {
+      btn.addEventListener('click', e => {
+        e.preventDefault()
+        e.stopPropagation()
+        const svg = wrap.__mermaidOriginalSvg || wrap.querySelector('svg')
+        if (!svg) return
+        const initViewBox = wrap.__mermaidInitViewBox
+        openSvgInNewTab({ source: svg, initViewBox })
+      })
+      btn.__mermaidViewerBound = true
+    }
+  }
+
+  // Zoom around a point (px, py) in the SVG viewport (in viewBox coordinates)
+  const zoomAtPoint = (vb, factor, px, py) => {
+    const w = vb[2] * factor
+    const h = vb[3] * factor
+    const nx = px - (px - vb[0]) * factor
+    const ny = py - (py - vb[1]) * factor
+    return [nx, ny, w, h]
+  }
+
+  const initMermaidGestures = wrap => {
+    // Clean up previous event listeners and pending frames
+    if (wrap.__mermaidAbortController) {
+      wrap.__mermaidAbortController.abort()
+      if (wrap.__mermaidRafId) cancelAnimationFrame(wrap.__mermaidRafId)
+    }
+    const ac = new AbortController()
+    wrap.__mermaidAbortController = ac
+    const svg = wrap.querySelector('svg')
+    if (!svg) return
+
+    // Ensure viewBox exists so gestures always work
+    const initVb = getSvgViewBox(svg)
+    wrap.__mermaidInitViewBox = initVb
+    wrap.__mermaidCurViewBox = initVb.slice()
+    setSvgViewBox(svg, initVb)
+    // Disable default gestures to prevent scroll chaining and pinch-zoom penetration in Chrome
+    svg.style.touchAction = 'none'
+
+    // Cache BoundingClientRect, throttled on scroll to reduce reflow
+    let cachedRect = svg.getBoundingClientRect()
+    let rectDirty = false
+    const markRectDirty = () => { rectDirty = true }
+    window.addEventListener('resize', markRectDirty, { signal: ac.signal })
+    window.addEventListener('scroll', markRectDirty, { signal: ac.signal, capture: true })
+    const getRect = () => {
+      if (rectDirty) {
+        cachedRect = svg.getBoundingClientRect()
+        rectDirty = false
+      }
+      return cachedRect
+    }
+
+    // Precompute clamp bounds from initial viewBox
+    const minW = initVb[2] * 0.1
+    const maxW = initVb[2] * 10
+    const minH = initVb[3] * 0.1
+    const maxH = initVb[3] * 10
+    const clampVb = vb => {
+      const out = vb.slice()
+      out[2] = clamp(out[2], minW, maxW)
+      out[3] = clamp(out[3], minH, maxH)
+      return out
+    }
+
+    // Throttle DOM updates using requestAnimationFrame
+    let pendingVb = null
+    let rafId = null
+    const applyVb = () => {
+      if (pendingVb) {
+        wrap.__mermaidCurViewBox = pendingVb
+        setSvgViewBox(svg, pendingVb)
+        pendingVb = null
+      }
+      rafId = null
+      wrap.__mermaidRafId = null
+    }
+    const setCurVb = vb => {
+      pendingVb = clampVb(vb)
+      if (!rafId) {
+        rafId = requestAnimationFrame(applyVb)
+        wrap.__mermaidRafId = rafId
+      }
+    }
+
+    const state = {
+      pointers: new Map(),
+      startVb: null,
+      startDist: 0,
+      lastPointerX: 0,
+      lastPointerY: 0
+    }
+
+    const onPointerDown = e => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return
+      svg.setPointerCapture(e.pointerId)
+      const curVb = wrap.__mermaidCurViewBox
+      state.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+      if (state.pointers.size === 1) {
+        state.startVb = curVb.slice()
+        state.lastPointerX = e.clientX
+        state.lastPointerY = e.clientY
+      } else if (state.pointers.size === 2) {
+        const pts = [...state.pointers.values()]
+        const dx = pts[0].x - pts[1].x
+        const dy = pts[0].y - pts[1].y
+        state.startDist = Math.hypot(dx, dy)
+        state.startVb = curVb.slice()
+      }
+    }
+
+    const onPointerMove = e => {
+      if (!state.pointers.has(e.pointerId)) return
+      state.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+      const curVb = wrap.__mermaidCurViewBox
+      const rect = getRect()
+      if (state.pointers.size === 1 && state.startVb) {
+        const p = state.pointers.values().next().value
+        const dxClient = p.x - state.lastPointerX
+        const dyClient = p.y - state.lastPointerY
+        state.lastPointerX = p.x
+        state.lastPointerY = p.y
+        const dx = dxClient * (curVb[2] / rect.width)
+        const dy = dyClient * (curVb[3] / rect.height)
+        setCurVb([curVb[0] - dx, curVb[1] - dy, curVb[2], curVb[3]])
+        return
+      }
+      if (state.pointers.size === 2 && state.startVb && state.startDist > 0) {
+        const pts = [...state.pointers.values()]
+        const dx = pts[0].x - pts[1].x
+        const dy = pts[0].y - pts[1].y
+        const dist = Math.hypot(dx, dy)
+        if (!dist) return
+        const factor = state.startDist / dist
+        const cx = (pts[0].x + pts[1].x) / 2
+        const cy = (pts[0].y + pts[1].y) / 2
+        const px = curVb[0] + (cx - rect.left) * (curVb[2] / rect.width)
+        const py = curVb[1] + (cy - rect.top) * (curVb[3] / rect.height)
+        setCurVb(zoomAtPoint(state.startVb, factor, px, py))
+      }
+    }
+
+    const onPointerUpOrCancel = e => {
+      // Release PointerCapture to avoid event capture anomalies
+      if (svg.hasPointerCapture && svg.hasPointerCapture(e.pointerId)) {
+        svg.releasePointerCapture(e.pointerId)
+      }
+      state.pointers.delete(e.pointerId)
+      if (state.pointers.size === 0) {
+        state.startVb = null
+        state.startDist = 0
+      } else if (state.pointers.size === 1) {
+        const p = state.pointers.values().next().value
+        state.lastPointerX = p.x
+        state.lastPointerY = p.y
+      }
+    }
+
+    const onWheel = e => {
+      // Prevent event bubbling from triggering external scroll
+      e.preventDefault()
+      e.stopPropagation()
+      // Normalize deltaY across deltaMode (Chrome uses pixels, Safari uses lines)
+      let delta = e.deltaY
+      if (e.deltaMode === 1) delta *= 16
+      else if (e.deltaMode === 2) delta *= 400
+
+      // Continuous zoom factor: smoother than fixed 1.1/0.9 steps
+      const zoomFactor = Math.pow(1.001, delta)
+
+      const curVb = wrap.__mermaidCurViewBox
+      const rect = getRect()
+      const px = curVb[0] + (e.clientX - rect.left) * (curVb[2] / rect.width)
+      const py = curVb[1] + (e.clientY - rect.top) * (curVb[3] / rect.height)
+      setCurVb(zoomAtPoint(curVb, zoomFactor, px, py))
+    }
+
+    const onDblClick = () => {
+      const init = wrap.__mermaidInitViewBox
+      if (init) setCurVb(init)
+    }
+
+    svg.addEventListener('pointerdown', onPointerDown, { signal: ac.signal })
+    svg.addEventListener('pointermove', onPointerMove, { signal: ac.signal })
+    svg.addEventListener('pointerup', onPointerUpOrCancel, { signal: ac.signal })
+    svg.addEventListener('pointercancel', onPointerUpOrCancel, { signal: ac.signal })
+    svg.addEventListener('wheel', onWheel, { passive: false, signal: ac.signal })
+    svg.addEventListener('dblclick', onDblClick, { signal: ac.signal })
+  }
+
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      // Clean up event listeners before removing old SVG
+      if (item.__mermaidAbortController) {
+        item.__mermaidAbortController.abort()
+      }
+      const oldSvg = item.querySelector('svg')
+      if (oldSvg) oldSvg.remove()
+      let config = {}
+      try {
+        config = mermaidSrc.dataset.config ? JSON.parse(mermaidSrc.dataset.config) : {}
+      } catch (e) {
+        console.warn('[mermaid] failed to parse dataset.config:', e)
+      }
+      if (!config.theme) {
+        config.theme = theme
+      }
+      const mermaidThemeConfig = `%%{init: ${JSON.stringify(config)}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+        if (true) initMermaidGestures(item)
+        item.__mermaidOriginalSvg = svg
+        if (true) attachMermaidViewerButton(item)
+      }
+
+      const handleError = err => {
+        console.error(`[mermaid] render failed for block #${index}:`, err)
+        const errorEl = document.createElement('div')
+        errorEl.className = 'mermaid-error'
+        errorEl.textContent = `Mermaid render error: ${err.message || err}`
+        mermaidSrc.insertAdjacentElement('afterend', errorEl)
+      }
+
+      try {
+        const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+        // mermaid v9 and v10 compatibility
+        if (typeof renderFn === 'string') {
+          renderMermaid(renderFn)
+        } else {
+          renderFn.then(({ svg }) => renderMermaid(svg)).catch(handleError)
+        }
+      } catch (err) {
+        handleError(err)
+      }
+    })
+  }
+
+  const codeToMermaid = $article => {
+    const codeMermaidEle = $article.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    const $article = document.getElementById('article-container')
+    if (!$article) return
+
+    if (false) codeToMermaid($article)
+    const $mermaid = $article.querySelectorAll('.mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('/vendor/butterfly/mermaid/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const applyThemeDefaultsConfig = theme => {
+    if (theme === 'dark-mode') {
+      Chart.defaults.color = "rgba(255, 255, 255, 0.8)"
+      Chart.defaults.borderColor = "rgba(255, 255, 255, 0.2)"
+      Chart.defaults.scale.ticks.backdropColor = "transparent"
+    } else {
+      Chart.defaults.color = "rgba(0, 0, 0, 0.8)"
+      Chart.defaults.borderColor = "rgba(0, 0, 0, 0.1)"
+      Chart.defaults.scale.ticks.backdropColor = "transparent"
+    }
+  }
+
+  // Recursively traverse the config object and automatically apply theme-specific color schemes
+  const applyThemeConfig = (obj, theme) => {
+    if (typeof obj !== 'object' || obj === null) return
+
+    Object.keys(obj).forEach(key => {
+      const value = obj[key]
+      // If the property is an object and has theme-specific options, apply them
+      if (typeof value === 'object' && value !== null) {
+        if (value[theme]) {
+          obj[key] = value[theme] // Apply the value for the current theme
+        } else {
+          // Recursively process child objects
+          applyThemeConfig(value, theme)
+        }
+      }
+    })
+  }
+
+  const runChartJS = ele => {
+    window.loadChartJS = true
+
+    Array.from(ele).forEach((item, index) => {
+      const chartSrc = item.firstElementChild
+      const chartID = item.getAttribute('data-chartjs-id') || ('chartjs-' + index) // Use custom ID or default ID
+      const width = item.getAttribute('data-width')
+      const existingCanvas = document.getElementById(chartID)
+
+      // If a canvas already exists, remove it to avoid rendering duplicates
+      if (existingCanvas) {
+          existingCanvas.parentNode.remove()
+      }
+
+      const chartDefinition = chartSrc.textContent
+      const canvas = document.createElement('canvas')
+      canvas.id = chartID
+
+      const div = document.createElement('div')
+      div.className = 'chartjs-wrap'
+
+      if (width) {
+        div.style.width = width
+      }
+
+      div.appendChild(canvas)
+      chartSrc.insertAdjacentElement('afterend', div)
+
+      const ctx = document.getElementById(chartID).getContext('2d')
+
+      const config = JSON.parse(chartDefinition)
+
+      const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark-mode' : 'light-mode'
+
+      // Set default styles (initial setup)
+      applyThemeDefaultsConfig(theme)
+
+      // Automatically traverse the config and apply dual-mode color schemes
+      applyThemeConfig(config, theme)
+
+      new Chart(ctx, config)
+    })
+  }
+
+  const loadChartJS = () => {
+    const chartJSEle = document.querySelectorAll('#article-container .chartjs-container')
+    if (chartJSEle.length === 0) return
+
+    window.loadChartJS ? runChartJS(chartJSEle) : btf.getScript('/vendor/butterfly/chartjs/chart.umd.min.js').then(() => runChartJS(chartJSEle))
+  }
+
+  // Listen for theme change events
+  btf.addGlobalFn('themeChange', loadChartJS, 'chartjs')
+  btf.addGlobalFn('encrypt', loadChartJS, 'chartjs')
+
+  window.pjax ? loadChartJS() : document.addEventListener('DOMContentLoaded', loadChartJS)
+})()</script><script>(() => {
+  const abcjsInit = () => {
+    const abcjsFn = () => {
+      const $article = document.getElementById("article-container")
+      if (!$article || $article.querySelector(".hbe-container")) return
+
+      setTimeout(() => {
+        const sheets = $article.querySelectorAll(".abc-music-sheet")
+        for (let i = 0; i < sheets.length; i++) {
+          const ele = sheets[i]
+          if (ele.children.length > 0) continue
+
+          // Parse parameters from data-params attribute
+          let params = {}
+          const dp = ele.getAttribute("data-params")
+          if (dp) {
+            try {
+              params = JSON.parse(dp)
+            } catch (e) {
+              console.error("Failed to parse data-params:", e)
+            }
+          }
+
+          // Merge parsed parameters with the responsive option
+          // Ensures params content appears before responsive
+          const options = { ...params, responsive: "resize" }
+
+          // Render the music score using ABCJS.renderAbc
+          ABCJS.renderAbc(ele, ele.textContent, options)
+        }
+      }, 100)
+    }
+
+    if (typeof ABCJS === "object" && ABCJS !== null) {
+      abcjsFn()
+    } else {
+      btf.getScript("/vendor/butterfly/abcjs/abcjs-basic-min.js").then(abcjsFn)
+    }
+  }
+
+  if (window.pjax) {
+    abcjsInit()
+  } else {
+    window.addEventListener("load", abcjsInit)
+  }
+
+  btf.addGlobalFn("encrypt", abcjsInit, "abcjs")
+})()</script></div><canvas id="universe" aria-hidden="true"></canvas><script defer src="/js/universe.js"></script><script defer src="/js/tag-heatmap.js"></script><script defer src="/js/external-media-consent.js"></script><script defer src="/js/giscus-consent.js"></script><script defer src="/js/flashcard-sync-nav.js"></script><script src="/vendor/butterfly/pjax/pjax.min.js" defer="defer"></script><script>document.addEventListener('DOMContentLoaded', () => {
+  const pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+
+  window.pjax = new Pjax({
+    elements: 'a:not([target="_blank"]):not([data-fancybox])',
+    selectors: pjaxSelectors,
+    cacheBust: false,
+    analytics: false,
+    scrollRestoration: false
+  })
+
+  const triggerPjaxFn = (val) => {
+    if (!val) return
+    Object.values(val).forEach(fn => {
+      try {
+        fn()
+      } catch (err) {
+        console.debug('Pjax callback failed:', err)
+      }
+    })
+  }
+
+  document.addEventListener('pjax:send', () => {
+    // removeEventListener
+    btf.removeGlobalFnEvent('pjaxSendOnce')
+    btf.removeGlobalFnEvent('themeChange')
+
+    // reset readmode
+    const $bodyClassList = document.body.classList
+    if ($bodyClassList.contains('read-mode')) $bodyClassList.remove('read-mode')
+
+    triggerPjaxFn(window.globalFn.pjaxSend)
+  })
+
+  document.addEventListener('pjax:complete', () => {
+    btf.removeGlobalFnEvent('pjaxCompleteOnce')
+    document.querySelectorAll('script[data-pjax]').forEach(item => {
+      if (!item.parentNode) return
+      const newScript = document.createElement('script')
+      const content = item.text || item.textContent || ''
+      Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+      newScript.appendChild(document.createTextNode(content))
+      item.parentNode.replaceChild(newScript, item)
+    })
+
+    triggerPjaxFn(window.globalFn.pjaxComplete)
+  })
+
+  document.addEventListener('pjax:error', e => {
+    const responseURL = e.request && e.request.responseURL
+    if (e.request && e.request.status === 404) {
+      true
+        ? pjax.loadUrl('/404.html')
+        : responseURL && (window.location.href = responseURL)
+    } else if (responseURL) {
+      window.location.href = responseURL
+    }
+  })
+})</script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="输入关键词..." type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js?v=5.7.0"></script></div></div><!-- hexo injector body_end start --><script defer src="/flashcard-assets/ts-fsrs.umd.js"></script><script defer src="/flashcard-assets/flashcard-queue.js"></script><script id="hfc-sync-config-data" type="application/json">{"enabled":true,"url":"https://hkqqjttiqhwfdintqxpx.supabase.co","publishableKey":"sb_publishable_BYiAsjvfObJ1Kj26-YkVeQ_x4ruAFc4"}</script><script defer src="/flashcard-assets/supabase.js"></script><script defer src="/flashcard-assets/flashcard-sync.js"></script><script defer src="/flashcard-assets/flashcard.js"></script><!-- hexo injector body_end end --></body></html>

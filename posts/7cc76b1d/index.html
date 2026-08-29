@@ -1,0 +1,967 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>MySQL(十)事务与MVCC | 𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮'𝓼 𝓦𝓸𝓻𝓴𝓢𝓹𝓪𝓬𝓮</title><meta name="author" content="𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮"><meta name="copyright" content="𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="ffffff"><meta name="description" content="从事务边界、隔离级别和一致性读理解 InnoDB 的版本链与 Read View，并用回滚场景验证原子性。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MySQL(十)事务与MVCC">
+<meta property="og:url" content="https://koco-co.github.io/posts/7cc76b1d/index.html">
+<meta property="og:site_name" content="𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮&#39;𝓼 𝓦𝓸𝓻𝓴𝓢𝓹𝓪𝓬𝓮">
+<meta property="og:description" content="从事务边界、隔离级别和一致性读理解 InnoDB 的版本链与 Read View，并用回滚场景验证原子性。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://koco-co.github.io/img/picgo-images/mysql-course-cover.png">
+<meta property="article:published_time" content="2026-03-31T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-08-29T15:00:10.017Z">
+<meta property="article:author" content="𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮">
+<meta property="article:tag" content="MySQL">
+<meta property="article:tag" content="事务与MVCC">
+<meta property="article:tag" content="数据库">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://koco-co.github.io/img/picgo-images/mysql-course-cover.png"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "MySQL(十)事务与MVCC",
+  "url": "https://koco-co.github.io/posts/7cc76b1d/",
+  "image": "https://koco-co.github.io/img/picgo-images/mysql-course-cover.png",
+  "datePublished": "2026-03-31T16:00:00.000Z",
+  "dateModified": "2026-08-29T15:00:10.017Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮",
+      "url": "https://koco-co.github.io"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.ico"><link rel="canonical" href="https://koco-co.github.io/posts/7cc76b1d/index.html"><link rel="preconnect"/><link rel="stylesheet" href="/css/index.css?v=5.7.0"><link rel="stylesheet" href="/vendor/butterfly/fontawesome/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        const data = { value }
+
+        if (ttl != null) {
+          data.expiry = Date.now() + ttl * 86400000
+        }
+
+        localStorage.setItem(key, JSON.stringify(data))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return
+
+        try {
+          const data = JSON.parse(itemStr)
+
+          if (data.expiry && Date.now() > data.expiry) {
+            localStorage.removeItem(key)
+            return
+          }
+
+          return data.value
+        } catch {
+          localStorage.removeItem(key)
+        }
+      }
+    }
+
+    const scriptCache = new Map()
+    const cssCache = new Map()
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => {
+        if (scriptCache.has(url)) {
+          return scriptCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+
+          script.src = url
+          script.async = true
+
+          for (const key in attr) {
+            script.setAttribute(key, attr[key])
+          }
+
+          script.onload = resolve
+          script.onerror = reject
+
+          document.head.appendChild(script)
+        })
+
+        scriptCache.set(url, promise)
+
+        return promise
+      },
+      getCSS: (url, id) => {
+        if (cssCache.has(url)) {
+          return cssCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const link = document.createElement('link')
+
+          link.rel = 'stylesheet'
+          link.href = url
+
+          if (id) {
+            link.id = id
+          }
+
+          link.onload = resolve
+          link.onerror = reject
+
+          document.head.appendChild(link)
+        })
+
+        cssCache.set(url, promise)
+
+        return promise
+      },
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!true && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+      const activateDarkMode = () => {
+        document.documentElement.dataset.theme = 'dark'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.dataset.theme = 'light'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', 'ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const mediaQueryDark = window.matchMedia('(prefers-color-scheme: dark)')
+          const mediaQueryLight = window.matchMedia('(prefers-color-scheme: light)')
+
+          if (theme === undefined) {
+            if (mediaQueryLight.matches) activateLightMode()
+            else if (mediaQueryDark.matches) activateDarkMode()
+            else {
+              const hour = new Date().getHours()
+              const start = 10
+              const end = 22
+              const isNight =
+                start < end
+                    ? hour < start || hour >= end
+                    : hour >= start || hour < end
+              isNight ? activateDarkMode() : activateLightMode()
+            }
+            mediaQueryDark.addEventListener('change', e => {
+              if (saveToLocal.get('theme') === undefined) {
+                e.matches ? activateDarkMode() : activateLightMode()
+              }
+            })
+          } else {
+            theme === 'light' ? activateLightMode() : activateDarkMode()
+          }
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":true,"pagination":{"enable":true,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":300,"highlightFullpage":false,"highlightMacStyle":true},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/vendor/butterfly/infinitegrid/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: true,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'MySQL(十)事务与MVCC',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/custom.css"><link rel="stylesheet" href="/css/universe.css"><link rel="stylesheet" href="/css/page-archive-categories-tags.css"><link rel="stylesheet" href="/css/post-tags.css"><link rel="stylesheet" href="/css/external-media.css"><!-- hexo injector head_end start --><link rel="stylesheet" href="/flashcard-assets/flashcard.css"><link rel="stylesheet" href="/vendor/tag-plugins-plus/font-awesome-animation.min.css" media="defer" onload="this.media='all'"><link rel="stylesheet" href="/vendor/tag-plugins-plus/tag-plugins.css" media="defer" onload="this.media='all'"><script src="/vendor/tag-plugins-plus/carousel-touch.js"></script><!-- hexo injector head_end end --><meta name="generator" content="Hexo 8.1.2"></head><body><div class="bg-animation" id="web_bg" style="background-image: url(/img/background.jpg);"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/sisyphus-vale-avatar.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">232</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">157</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">23</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><span class="site-page group hide"><i class="fa-fw fas fa-book"></i><span> 文章</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/learn-topic/"><i class="fa-fw fas fa-graduation-cap"></i><span> 复习</span></a></div><div class="menus_item"><a class="site-page" href="/video/"><i class="fa-fw fas fa-video"></i><span> 视频</span></a></div><div class="menus_item"><a class="site-page" href="/wallpaper/"><i class="fa-fw fas fa-image"></i><span> 照片</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(/img/picgo-images/mysql-course-cover.png);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮'𝓼 𝓦𝓸𝓻𝓴𝓢𝓹𝓪𝓬𝓮</span></a><a class="nav-page-title" href="/"><span class="site-name">MySQL(十)事务与MVCC</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><span class="site-page group hide"><i class="fa-fw fas fa-book"></i><span> 文章</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/learn-topic/"><i class="fa-fw fas fa-graduation-cap"></i><span> 复习</span></a></div><div class="menus_item"><a class="site-page" href="/video/"><i class="fa-fw fas fa-video"></i><span> 视频</span></a></div><div class="menus_item"><a class="site-page" href="/wallpaper/"><i class="fa-fw fas fa-image"></i><span> 照片</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">MySQL(十)事务与MVCC<a class="post-edit-link" href="https://github.com/koco-co/hexo-blog/edit/main/source/_posts/learn-topic/mysql/MySQL(十)事务与MVCC.md" title="编辑" target="_blank"><i class="fas fa-pencil-alt"></i></a></h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-03-31T16:00:00.000Z" title="发表于 2026-04-01 00:00:00">2026-04-01</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-08-29T15:00:10.017Z" title="更新于 2026-08-29 23:00:10">2026-08-29</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Learn-Topic/">Learn Topic</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Learn-Topic/MySQL/">MySQL</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">2.2k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>7分钟</span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><nav class="course-series-nav" aria-label="MySQL 文章进度"><div class="course-series-nav__header"><div class="course-series-nav__heading"><strong>MySQL 文章进度</strong></div></div><div class="course-series-nav__progress" role="progressbar" aria-label="文章进度" aria-valuemin="1" aria-valuemax="15" aria-valuenow="10"><span style="width: 66.6667%"></span></div><ol class="course-series-nav__list"><li class="course-series-nav__item"><a href="/posts/2ec898f2/"><span class="course-series-nav__index">01</span><span class="course-series-nav__title">MySQL(一)入门路线</span></a></li><li class="course-series-nav__item"><a href="/posts/54906a1/"><span class="course-series-nav__index">02</span><span class="course-series-nav__title">MySQL(二)数据库基础与表设计</span></a></li><li class="course-series-nav__item"><a href="/posts/4df9aab4/"><span class="course-series-nav__index">03</span><span class="course-series-nav__title">MySQL(三)数据写入与约束</span></a></li><li class="course-series-nav__item"><a href="/posts/80283a7e/"><span class="course-series-nav__index">04</span><span class="course-series-nav__title">MySQL(四)查询基础与聚合</span></a></li><li class="course-series-nav__item"><a href="/posts/55ce38b/"><span class="course-series-nav__index">05</span><span class="course-series-nav__title">MySQL(五)多表查询与子查询</span></a></li><li class="course-series-nav__item"><a href="/posts/6d8f8f0/"><span class="course-series-nav__index">06</span><span class="course-series-nav__title">MySQL(六)CTE与窗口函数</span></a></li><li class="course-series-nav__item"><a href="/posts/12331af3/"><span class="course-series-nav__index">07</span><span class="course-series-nav__title">MySQL(七)索引原理与设计</span></a></li><li class="course-series-nav__item"><a href="/posts/3bb0fc53/"><span class="course-series-nav__index">08</span><span class="course-series-nav__title">MySQL(八)执行计划与查询优化</span></a></li><li class="course-series-nav__item"><a href="/posts/b67bacc6/"><span class="course-series-nav__index">09</span><span class="course-series-nav__title">MySQL(九)InnoDB与日志</span></a></li><li class="course-series-nav__item is-current"><a href="/posts/7cc76b1d/" aria-current="page"><span class="course-series-nav__index">10</span><span class="course-series-nav__title">MySQL(十)事务与MVCC</span></a></li><li class="course-series-nav__item"><a href="/posts/2d2f0ce4/"><span class="course-series-nav__index">11</span><span class="course-series-nav__title">MySQL(十一)锁与并发控制</span></a></li><li class="course-series-nav__item"><a href="/posts/aa88466a/"><span class="course-series-nav__index">12</span><span class="course-series-nav__title">MySQL(十二)安全与权限</span></a></li><li class="course-series-nav__item"><a href="/posts/94d5d11f/"><span class="course-series-nav__index">13</span><span class="course-series-nav__title">MySQL(十三)备份恢复与复制</span></a></li><li class="course-series-nav__item"><a href="/posts/5ad9ac4a/"><span class="course-series-nav__index">14</span><span class="course-series-nav__title">MySQL(十四)进阶路线</span></a></li><li class="course-series-nav__item"><a href="/posts/e11b5c6b/"><span class="course-series-nav__index">15</span><span class="course-series-nav__title">MySQL(十五)综合实战</span></a></li></ol></nav>
+
+<div class="note primary flat"><p>事务把多条语句变成一个原子业务动作；MVCC 让普通一致性读看到符合快照规则的版本。先划清事务边界，再谈隔离级别，最后用两个会话观察提交、回滚和快照差异。</p>
+</div>
+
+<h2 id="事务边界"><a href="#事务边界" class="headerlink" title="事务边界"></a>事务边界</h2><div class="note info flat"><p>InnoDB 事务至少要回答：何时开始、哪些语句属于同一业务动作、何时提交、失败如何回滚。自动提交开启时，每条 DML 可能就是一个独立事务；显式 <code>START TRANSACTION</code> 才能把订单头、明细和库存操作绑在一起。</p>
+</div>
+
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SET</span> autocommit <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line"><span class="keyword">START</span> TRANSACTION;</span><br><span class="line"></span><br><span class="line"><span class="keyword">INSERT INTO</span> orders (user_id, status, total_amount)</span><br><span class="line"><span class="keyword">VALUES</span> (<span class="number">1</span>, <span class="string">&#x27;pending&#x27;</span>, <span class="number">288.00</span>);</span><br><span class="line"><span class="keyword">SET</span> <span class="variable">@order_id</span> <span class="operator">=</span> LAST_INSERT_ID();</span><br><span class="line"></span><br><span class="line"><span class="keyword">INSERT INTO</span> order_items (order_id, product_id, quantity, unit_price)</span><br><span class="line"><span class="keyword">VALUES</span> (<span class="variable">@order_id</span>, <span class="number">101</span>, <span class="number">1</span>, <span class="number">199.00</span>),</span><br><span class="line">       (<span class="variable">@order_id</span>, <span class="number">102</span>, <span class="number">1</span>, <span class="number">89.00</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">SELECT</span> <span class="variable">@order_id</span> <span class="keyword">AS</span> order_id;</span><br><span class="line"><span class="keyword">COMMIT</span>;</span><br><span class="line"><span class="keyword">SET</span> autocommit <span class="operator">=</span> <span class="number">1</span>;</span><br></pre></td></tr></table></figure>
+
+<div class="note danger flat"><p>不要在没有确认提交的情况下把事务连接交还连接池；也不要把用户输入、远程调用和长时间等待放在持锁事务中。异常路径必须显式 ROLLBACK，并确认连接状态已经复位。</p>
+</div>
+
+<h2 id="ACID-模型"><a href="#ACID-模型" class="headerlink" title="ACID 模型"></a>ACID 模型</h2><table>
+<thead>
+<tr>
+<th>属性</th>
+<th>在 ShopLab 中的观察</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Atomicity</td>
+<td>订单头成功但明细失败时整体回滚</td>
+</tr>
+<tr>
+<td>Consistency</td>
+<td>外键、CHECK 和业务约束在提交前后成立</td>
+</tr>
+<tr>
+<td>Isolation</td>
+<td>并发事务按隔离级别看到彼此的版本</td>
+</tr>
+<tr>
+<td>Durability</td>
+<td>提交后的修改由日志保证崩溃后可恢复</td>
+</tr>
+</tbody></table>
+<div class="note primary flat"><p>ACID 不是四个互相独立的开关：约束提供一致性，redo 提供持久化，锁与 MVCC 共同实现隔离，事务边界把它们组合成业务结果。解释面试题时要给出具体语句和可观察证据。</p>
+</div>
+
+<h2 id="MVCC-版本链"><a href="#MVCC-版本链" class="headerlink" title="MVCC 版本链"></a>MVCC 版本链</h2><!-- concept-story:start -->
+
+<p>茶行的账房每天会改一次某袋茶的标价。他不擦掉旧价，而是在账页最上方写下新价，把旧页用细线系在下面。上午来验账的客商拿着一张进门时盖好的查验单；午后账房又改了价，客商仍要按自己进门那刻能够查到的账页核算。</p>
+<p>账房先把最上页递给客商。若上页的日期和盖章不合他的查验单，就顺着细线往下翻，直到找到当时本该看见的那一页。客商看到的是一页合规的旧账，并不是茶行特意为他复印了一整本账簿。</p>
+<p>细线越来越长时，账房还要等确认没有早来的客商会查它，才能收走最老的纸页。客商终于意识到，自己守住的不是“永远不变的价格”，而是一次查账可以接受的视野。</p>
+<!-- concept-story:end -->
+
+<div class="note info flat"><p>账页顶端、细线和查验单分别对应当前行版本、undo 版本链与 Read View。InnoDB 在行记录中维护事务标记和 undo 链；普通一致性读根据 Read View 判断当前版本是否可见，不可见就沿 undo 找到满足快照的旧版本。这不等同于复制整张表，也不表示旧版本可以无限保留。</p>
+</div>
+
+<div class="mermaid-wrap"><pre class="mermaid-src" data-config="{}" hidden>
+    flowchart TD
+  N[当前记录 value&#x3D;30\nDB_TRX_ID&#x3D;T3] --&gt; U[undo 旧版本 value&#x3D;20\nT2]
+  U --&gt; V[undo 更旧版本 value&#x3D;10\nT1]
+  R[Read View] -.可见性判断.- N
+  R -.不可见则沿 undo 回溯.- U
+  </pre></div>
+
+<h2 id="隔离级别"><a href="#隔离级别" class="headerlink" title="隔离级别"></a>隔离级别</h2><table>
+<thead>
+<tr>
+<th>级别</th>
+<th>典型现象</th>
+<th>InnoDB 说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>READ UNCOMMITTED</td>
+<td>可能读到未提交值</td>
+<td>很少用于业务一致性查询</td>
+</tr>
+<tr>
+<td>READ COMMITTED</td>
+<td>每次语句建立新的快照</td>
+<td>减少脏读，但同一事务两次查询可能不同</td>
+</tr>
+<tr>
+<td>REPEATABLE READ</td>
+<td>同一事务的一致性读通常复用快照</td>
+<td>InnoDB 默认级别；锁定读另有语义</td>
+</tr>
+<tr>
+<td>SERIALIZABLE</td>
+<td>普通读也更强地参与锁定</td>
+<td>并发度低，需明确业务收益</td>
+</tr>
+</tbody></table>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SET</span> TRANSACTION ISOLATION LEVEL REPEATABLE READ;</span><br><span class="line"><span class="keyword">START</span> TRANSACTION <span class="keyword">WITH</span> CONSISTENT SNAPSHOT;</span><br><span class="line"><span class="keyword">SELECT</span> @<span class="variable">@transaction_isolation</span>;</span><br><span class="line"><span class="keyword">SELECT</span> id, quantity <span class="keyword">FROM</span> inventory <span class="keyword">WHERE</span> product_id <span class="operator">=</span> <span class="number">101</span>;</span><br><span class="line"><span class="comment">-- 其他会话提交库存修改后，本会话再次普通 SELECT 仍按快照规则读取。</span></span><br><span class="line"><span class="keyword">COMMIT</span>;</span><br></pre></td></tr></table></figure>
+
+<div class="note info flat"><p>用两个会话可以把级别差异变成结果：会话 A 在 <code>REPEATABLE READ</code> 中先读一行，会话 B 修改并提交后，会话 A 再次普通 SELECT 仍读到同一快照；把 A 改为 <code>READ COMMITTED</code>，第二次语句会建立新快照并读到已提交值。两者都不等同于锁定读，<code>FOR UPDATE</code> 应单独观察等待和当前版本。</p>
+</div>
+
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 会话 A</span></span><br><span class="line"><span class="keyword">SET</span> TRANSACTION ISOLATION LEVEL REPEATABLE READ;</span><br><span class="line"><span class="keyword">START</span> TRANSACTION <span class="keyword">WITH</span> CONSISTENT SNAPSHOT;</span><br><span class="line"><span class="keyword">SELECT</span> quantity <span class="keyword">FROM</span> inventory <span class="keyword">WHERE</span> product_id <span class="operator">=</span> <span class="number">101</span>;</span><br><span class="line"><span class="comment">-- 会话 B 执行 UPDATE ... COMMIT 后，A 再执行同一 SELECT，对比结果。</span></span><br><span class="line"><span class="keyword">SELECT</span> quantity <span class="keyword">FROM</span> inventory <span class="keyword">WHERE</span> product_id <span class="operator">=</span> <span class="number">101</span>;</span><br><span class="line"><span class="keyword">COMMIT</span>;</span><br></pre></td></tr></table></figure>
+
+<div class="note warning flat"><p>“可重复读”只描述一致性读的快照，不意味着所有读都不等待。<code>SELECT ... FOR UPDATE</code> 是锁定读，读取当前最新版本并加锁；隔离级别、读类型和锁必须同时说明。</p>
+</div>
+
+<h2 id="保存点回滚"><a href="#保存点回滚" class="headerlink" title="保存点回滚"></a>保存点回滚</h2><div class="note primary flat"><p>Savepoint 允许回滚事务的一段工作而不放弃前面的修改。它适合批量导入中逐批处理，但不能跨事务存在，也不能把已经提交的 DDL 或外部副作用变回来。</p>
+</div>
+
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">START</span> TRANSACTION;</span><br><span class="line"><span class="keyword">INSERT INTO</span> user_imports (source_name, external_id, email, raw_payload)</span><br><span class="line"><span class="keyword">VALUES</span> (<span class="string">&#x27;crm&#x27;</span>, <span class="string">&#x27;u-100&#x27;</span>, <span class="string">&#x27;a@example.com&#x27;</span>, <span class="built_in">JSON_OBJECT</span>(<span class="string">&#x27;name&#x27;</span>, <span class="string">&#x27;A&#x27;</span>));</span><br><span class="line"></span><br><span class="line"><span class="keyword">SAVEPOINT</span> before_second_row;</span><br><span class="line"><span class="keyword">INSERT INTO</span> user_imports (source_name, external_id, email, raw_payload)</span><br><span class="line"><span class="keyword">VALUES</span> (<span class="string">&#x27;crm&#x27;</span>, <span class="string">&#x27;u-101&#x27;</span>, <span class="string">&#x27;b@example.com&#x27;</span>, <span class="built_in">JSON_OBJECT</span>(<span class="string">&#x27;name&#x27;</span>, <span class="string">&#x27;B&#x27;</span>));</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 第二批校验失败时只撤销它</span></span><br><span class="line"><span class="keyword">ROLLBACK</span> <span class="keyword">TO</span> <span class="keyword">SAVEPOINT</span> before_second_row;</span><br><span class="line"><span class="keyword">RELEASE</span> <span class="keyword">SAVEPOINT</span> before_second_row;</span><br><span class="line"><span class="keyword">COMMIT</span>;</span><br></pre></td></tr></table></figure>
+
+<div class="note danger flat"><p>普通事务回滚不等于“所有动作都消失”。隐式提交的语句、已发送的邮件、外部 HTTP 调用和已写出的日志不会被数据库 ROLLBACK 撤销；设计时把外部副作用放在提交后事件或可重试 outbox 中。</p>
+</div>
+
+<h2 id="回滚实验"><a href="#回滚实验" class="headerlink" title="回滚实验"></a>回滚实验</h2><div class="timeline  blue"><div class='timeline-item headline'>
+        <div class='timeline-item-title'>
+          <div class='item-circle'><p>订单失败回滚</p>
+</div>
+        </div>
+      </div><div class='timeline-item'>
+        <div class='timeline-item-title'>
+          <div class='item-circle'><p>开始</p>
+</div>
+        </div>
+        <div class='timeline-item-content'><p>START TRANSACTION，记录当前库存和订单数量。</p>
+</div>
+      </div><div class='timeline-item'>
+        <div class='timeline-item-title'>
+          <div class='item-circle'><p>写入</p>
+</div>
+        </div>
+        <div class='timeline-item-content'><p>插入订单头，故意让第二条明细引用不存在的商品，观察外键错误。</p>
+</div>
+      </div><div class='timeline-item'>
+        <div class='timeline-item-title'>
+          <div class='item-circle'><p>回滚</p>
+</div>
+        </div>
+        <div class='timeline-item-content'><p>执行 ROLLBACK，再查询订单、明细和库存，三者都应回到开始值。</p>
+</div>
+      </div><div class='timeline-item'>
+        <div class='timeline-item-title'>
+          <div class='item-circle'><p>解释</p>
+</div>
+        </div>
+        <div class='timeline-item-content'><p>说明原子性来自事务边界，约束失败阻止非法行，redo&#x2F;undo 则分别支持持久化和回退。</p>
+</div>
+      </div></div>
+
+<div class="note success flat"><p>实验的证据是失败码、回滚后每张表的行数&#x2F;值，以及同一连接的事务状态。只看到“客户端报错”而没有回读数据，不能证明回滚真的发生。</p>
+</div>
+
+<h2 id="XA-边界"><a href="#XA-边界" class="headerlink" title="XA 边界"></a>XA 边界</h2><details class="folding-tag" yellow><summary> XA 只作扩展认识 </summary>
+              <div class='content'>
+              <p>XA 把事务拆成 prepare、commit&#x2F;rollback 等状态，适合需要两阶段提交的外部资源协调，但会引入悬挂事务、恢复和超时管理。它不是普通单库订单事务的默认升级路径，使用前必须验证驱动、资源管理器和故障恢复流程。</p><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">XA <span class="keyword">START</span> <span class="string">&#x27;shoplab-demo&#x27;</span>;</span><br><span class="line"><span class="comment">-- DML ...</span></span><br><span class="line">XA <span class="keyword">END</span> <span class="string">&#x27;shoplab-demo&#x27;</span>;</span><br><span class="line">XA <span class="keyword">PREPARE</span> <span class="string">&#x27;shoplab-demo&#x27;</span>;</span><br><span class="line">XA RECOVER;</span><br><span class="line"><span class="comment">-- 确认外部协调状态后选择 XA COMMIT 或 XA ROLLBACK。</span></span><br></pre></td></tr></table></figure>
+              </div>
+            </details>
+
+<h2 id="常见问题"><a href="#常见问题" class="headerlink" title="常见问题"></a>常见问题</h2><article class="hfc-flip hfc-inline" data-hfc-flip data-hfc-inline data-card-id="mysql84-10-order-rollback-p1" tabindex="0">
+
+  <div class="hfc-flip__inner" data-hfc-flip-inner>
+    <div class="hfc-face hfc-face--front" data-hfc-face="front">
+      <div class="hfc-card-head"><span class="hfc-number">Q01</span><a class="hfc-priority hfc-priority--1" href="/learn-topic/?priority=1" title="筛选高频题" aria-label="筛选高频题">高频</a></div>
+      <div class="hfc-topics"><a class="hfc-topic" href="/learn-topic/?deck=mysql-8.4-interview">#mysql-8.4-interview</a><a class="hfc-topic" href="/learn-topic/?tag=%E4%BA%8B%E5%8A%A1">#事务</a><a class="hfc-topic" href="/learn-topic/?tag=%E5%9B%9E%E6%BB%9A">#回滚</a><a class="hfc-topic" href="/learn-topic/?tag=%E5%A4%96%E9%94%AE">#外键</a></div>
+      <div class="hfc-question"><p>订单头插入成功、第二条明细因外键失败；如何保证订单头不会孤零零地留下？</p>
+</div>
+      <span class="hfc-flip-hint">点击查看答案</span>
+    </div>
+    <div class="hfc-face hfc-face--back" data-hfc-face="back" aria-hidden="true">
+      <div class="hfc-card-head"><span class="hfc-number">Q01</span><a class="hfc-priority hfc-priority--1" href="/learn-topic/?priority=1" title="筛选高频题" aria-label="筛选高频题">高频</a></div>
+      <div class="hfc-topics"><a class="hfc-topic" href="/learn-topic/?deck=mysql-8.4-interview">#mysql-8.4-interview</a><a class="hfc-topic" href="/learn-topic/?tag=%E4%BA%8B%E5%8A%A1">#事务</a><a class="hfc-topic" href="/learn-topic/?tag=%E5%9B%9E%E6%BB%9A">#回滚</a><a class="hfc-topic" href="/learn-topic/?tag=%E5%A4%96%E9%94%AE">#外键</a></div>
+      <div class="hfc-back-question"><strong>问题:</strong><div class="hfc-back-question__content"><p>订单头插入成功、第二条明细因外键失败；如何保证订单头不会孤零零地留下？</p>
+</div></div>
+      <div class="hfc-answer-section"><strong>回答：</strong><div><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">START</span> TRANSACTION;</span><br><span class="line"><span class="keyword">INSERT INTO</span> orders (user_id, status, total_amount) <span class="keyword">VALUES</span> (<span class="number">1</span>, <span class="string">&#x27;pending&#x27;</span>, <span class="number">288.00</span>);</span><br><span class="line"><span class="keyword">INSERT INTO</span> order_items (order_id, product_id, quantity, unit_price) <span class="keyword">VALUES</span> (LAST_INSERT_ID(), <span class="number">999</span>, <span class="number">1</span>, <span class="number">1.00</span>);</span><br><span class="line"><span class="comment">-- 任一语句失败：ROLLBACK；全部成功：COMMIT</span></span><br></pre></td></tr></table></figure>
+</div></div>
+      <div class="hfc-explanation-section"><strong>解析：</strong><div><p>外键和事务解决不同问题：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">INSERT 订单头 ──成功──┐</span><br><span class="line">                     ├─ 任一明细失败 → ROLLBACK（订单头也消失）</span><br><span class="line">INSERT 明细 ──失败────┘</span><br></pre></td></tr></table></figure>
+<p>外键只拒绝不存在的 <code>product_id</code>，不会替你撤销已经提交的订单头；事务把多条 DML 绑定为一个原子边界。实验时同时回读订单头、明细和库存，确认失败后都恢复原值；DDL、外部消息和已经发送的网络副作用不属于普通 DML 的回滚范围。</p>
+</div></div>
+      
+    </div>
+  </div>
+</article>
+
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><div class="link-group"><div class="tag link"><a class="link-card" title="MySQL 8.4 Transaction Statements" target="_blank" rel="noopener" href="https://dev.mysql.com/doc/refman/8.4/en/sql-transactional-statements.html"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://www.mysql.com/favicon.ico"/></div><div class="right"><p class="text">MySQL 8.4 Transaction Statements</p><p class="url">https://dev.mysql.com/doc/refman/8.4/en/sql-transactional-statements.html</p></div></a></div>
+<div class="tag link"><a class="link-card" title="MySQL 8.4 COMMIT" target="_blank" rel="noopener" href="https://dev.mysql.com/doc/refman/8.4/en/commit.html"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://www.mysql.com/favicon.ico"/></div><div class="right"><p class="text">MySQL 8.4 COMMIT</p><p class="url">https://dev.mysql.com/doc/refman/8.4/en/commit.html</p></div></a></div>
+<div class="tag link"><a class="link-card" title="MySQL 8.4 SAVEPOINT" target="_blank" rel="noopener" href="https://dev.mysql.com/doc/refman/8.4/en/savepoint.html"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://www.mysql.com/favicon.ico"/></div><div class="right"><p class="text">MySQL 8.4 SAVEPOINT</p><p class="url">https://dev.mysql.com/doc/refman/8.4/en/savepoint.html</p></div></a></div>
+<div class="tag link"><a class="link-card" title="MySQL 8.4 Transaction Isolation Levels" target="_blank" rel="noopener" href="https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://www.mysql.com/favicon.ico"/></div><div class="right"><p class="text">MySQL 8.4 Transaction Isolation Levels</p><p class="url">https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html</p></div></a></div>
+<div class="tag link"><a class="link-card" title="MySQL 8.4 Consistent Nonlocking Reads" target="_blank" rel="noopener" href="https://dev.mysql.com/doc/refman/8.4/en/innodb-consistent-read.html"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://www.mysql.com/favicon.ico"/></div><div class="right"><p class="text">MySQL 8.4 Consistent Nonlocking Reads</p><p class="url">https://dev.mysql.com/doc/refman/8.4/en/innodb-consistent-read.html</p></div></a></div>
+<div class="tag link"><a class="link-card" title="MySQL 8.4 InnoDB Multi-Versioning" target="_blank" rel="noopener" href="https://dev.mysql.com/doc/refman/8.4/en/innodb-multi-versioning.html"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://www.mysql.com/favicon.ico"/></div><div class="right"><p class="text">MySQL 8.4 InnoDB Multi-Versioning</p><p class="url">https://dev.mysql.com/doc/refman/8.4/en/innodb-multi-versioning.html</p></div></a></div>
+<div class="tag link"><a class="link-card" title="MySQL 8.4 XA Transactions" target="_blank" rel="noopener" href="https://dev.mysql.com/doc/refman/8.4/en/xa.html"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://www.mysql.com/favicon.ico"/></div><div class="right"><p class="text">MySQL 8.4 XA Transactions</p><p class="url">https://dev.mysql.com/doc/refman/8.4/en/xa.html</p></div></a></div></div>
+
+<div class="hfc-article-cta" data-hfc-article-cta data-hfc-article-count="1"><a class="hfc-button hfc-button--primary" href="/learn-topic/?article=_posts%2Flearn-topic%2Fmysql%2FMySQL(%E5%8D%81)%E4%BA%8B%E5%8A%A1%E4%B8%8EMVCC.md" title="复习本篇 · 1 张卡片" aria-label="复习本篇 · 1 张卡片"><i class="fas fa-graduation-cap hfc-review-icon" aria-hidden="true"></i><span class="hfc-review-label">复习</span><span class="hfc-review-detail">本篇 · 1 张卡片</span></a></div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://koco-co.github.io">𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://koco-co.github.io/posts/7cc76b1d/">https://koco-co.github.io/posts/7cc76b1d/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://koco-co.github.io" target="_blank">𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮'𝓼 𝓦𝓸𝓻𝓴𝓢𝓹𝓪𝓬𝓮</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/MySQL/">MySQL</a><a class="post-meta__tags" href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/">数据库</a><a class="post-meta__tags" href="/tags/%E4%BA%8B%E5%8A%A1%E4%B8%8EMVCC/">事务与MVCC</a></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞助</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechat.jpeg" target="_blank"><img class="post-qr-code-img" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/wechat.jpeg"/></a><div class="post-qr-code-desc"></div></li><li class="reward-item"><a href="/img/alipay.jpeg" target="_blank"><img class="post-qr-code-img" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/alipay.jpeg"/></a><div class="post-qr-code-desc"></div></li></ul></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/2d2f0ce4/" title="MySQL(十一)锁与并发控制"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/mysql-course-cover.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">MySQL(十一)锁与并发控制</div></div><div class="info-2"><div class="info-item-1">从记录锁、间隙锁和 next-key lock 推进到锁定读、死锁诊断和 SKIP LOCKED 任务领取，建立并发写入的可验证模型。</div></div></div></a><a class="pagination-related" href="/posts/b67bacc6/" title="MySQL(九)InnoDB与日志"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/mysql-course-cover.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">MySQL(九)InnoDB与日志</div></div><div class="info-2"><div class="info-item-1">理解 Buffer Pool、redo、undo、doublewrite、checkpoint、binlog 和崩溃恢复，建立持久化写入链路。</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/12331af3/" title="MySQL(七)索引原理与设计"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/mysql-course-cover.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-03-29</div><div class="info-item-2">MySQL(七)索引原理与设计</div></div><div class="info-2"><div class="info-item-1">从 InnoDB 页、B+Tree、聚簇与二级索引理解联合、覆盖索引和写放大，形成查询驱动的索引设计方法。</div></div></div></a><a class="pagination-related" href="/posts/3bb0fc53/" title="MySQL(八)执行计划与查询优化"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/mysql-course-cover.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-03-30</div><div class="info-item-2">MySQL(八)执行计划与查询优化</div></div><div class="info-2"><div class="info-item-1">使用统计信息、EXPLAIN ANALYZE、Performance Schema 和 sys 建立发现、改写、复测的查询优化闭环。</div></div></div></a><a class="pagination-related" href="/posts/94d5d11f/" title="MySQL(十三)备份恢复与复制"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/mysql-course-cover.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-04-04</div><div class="info-item-2">MySQL(十三)备份恢复与复制</div></div><div class="info-2"><div class="info-item-1">用 RecoverLab 串起一致备份、mysqldump、binlog 时间点恢复、GTID 复制和恢复验证，建立可执行的灾备闭环。</div></div></div></a><a class="pagination-related" href="/posts/b67bacc6/" title="MySQL(九)InnoDB与日志"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/mysql-course-cover.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-03-31</div><div class="info-item-2">MySQL(九)InnoDB与日志</div></div><div class="info-2"><div class="info-item-1">理解 Buffer Pool、redo、undo、doublewrite、checkpoint、binlog 和崩溃恢复，建立持久化写入链路。</div></div></div></a><a class="pagination-related" href="/posts/2d2f0ce4/" title="MySQL(十一)锁与并发控制"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/mysql-course-cover.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-04-02</div><div class="info-item-2">MySQL(十一)锁与并发控制</div></div><div class="info-2"><div class="info-item-1">从记录锁、间隙锁和 next-key lock 推进到锁定读、死锁诊断和 SKIP LOCKED 任务领取，建立并发写入的可验证模型。</div></div></div></a><a class="pagination-related" href="/posts/2ec898f2/" title="MySQL(一)入门路线"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/mysql-course-cover.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-03-23</div><div class="info-item-2">MySQL(一)入门路线</div></div><div class="info-2"><div class="info-item-1">面向零基础和面试准备，以 MySQL 8.4 LTS、ShopLab 九表实验和 SQL 场景闪卡串起建模、查询、优化、事务、锁、安全与恢复。</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/sisyphus-vale-avatar.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮</div><div class="author-info-description">身如柳絮随风扬 无论云泥意贯一</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">232</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">157</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">23</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/koco-co"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons"><a class="social-icon" href="mailto:kopohub@gmail.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a><a class="social-icon" href="https://v.douyin.com/uk6DHVS-OrI" target="_blank" title="TikTok"><i class="fab fa-tiktok"></i></a><a class="social-icon" href="https://space.bilibili.com/3546823172033014" target="_blank" title="Bilibili"><i class="fas fa-tv"></i></a><a class="social-icon" href="https://x.com/SugerQvQ" target="_blank" title="X"><i class="fab fa-x-twitter"></i></a><a class="social-icon" href="https://steamcommunity.com/profiles/76561199483116375/" target="_blank" title="Steam"><i class="fab fa-steam"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">欢迎来到 Sisyphus Vale。这里记录技术实践、系统学习与日常思考。</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8B%E5%8A%A1%E8%BE%B9%E7%95%8C"><span class="toc-number">1.</span> <span class="toc-text">事务边界</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ACID-%E6%A8%A1%E5%9E%8B"><span class="toc-number">2.</span> <span class="toc-text">ACID 模型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#MVCC-%E7%89%88%E6%9C%AC%E9%93%BE"><span class="toc-number">3.</span> <span class="toc-text">MVCC 版本链</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB"><span class="toc-number">4.</span> <span class="toc-text">隔离级别</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BF%9D%E5%AD%98%E7%82%B9%E5%9B%9E%E6%BB%9A"><span class="toc-number">5.</span> <span class="toc-text">保存点回滚</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9E%E6%BB%9A%E5%AE%9E%E9%AA%8C"><span class="toc-number">6.</span> <span class="toc-text">回滚实验</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#XA-%E8%BE%B9%E7%95%8C"><span class="toc-number">7.</span> <span class="toc-text">XA 边界</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98"><span class="toc-number">8.</span> <span class="toc-text">常见问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-number">9.</span> <span class="toc-text">参考资料</span></a></li></ol></div></div><div class="card-widget card-post-series"><div class="item-headline"><i class="fa-solid fa-layer-group"></i><span>系列文章</span></div><div class="aside-list"><div class="aside-list-item"><div class="content"><a class="title" href="/posts/e11b5c6b/" title="MySQL(十五)综合实战">MySQL(十五)综合实战</a><time datetime="2026-04-05T16:00:00.000Z" title="发表于 2026-04-06 00:00:00">2026-04-06</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/5ad9ac4a/" title="MySQL(十四)进阶路线">MySQL(十四)进阶路线</a><time datetime="2026-04-04T16:00:00.000Z" title="发表于 2026-04-05 00:00:00">2026-04-05</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/94d5d11f/" title="MySQL(十三)备份恢复与复制">MySQL(十三)备份恢复与复制</a><time datetime="2026-04-03T16:00:00.000Z" title="发表于 2026-04-04 00:00:00">2026-04-04</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/aa88466a/" title="MySQL(十二)安全与权限">MySQL(十二)安全与权限</a><time datetime="2026-04-02T16:00:00.000Z" title="发表于 2026-04-03 00:00:00">2026-04-03</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/2d2f0ce4/" title="MySQL(十一)锁与并发控制">MySQL(十一)锁与并发控制</a><time datetime="2026-04-01T16:00:00.000Z" title="发表于 2026-04-02 00:00:00">2026-04-02</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/7cc76b1d/" title="MySQL(十)事务与MVCC">MySQL(十)事务与MVCC</a><time datetime="2026-03-31T16:00:00.000Z" title="发表于 2026-04-01 00:00:00">2026-04-01</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/b67bacc6/" title="MySQL(九)InnoDB与日志">MySQL(九)InnoDB与日志</a><time datetime="2026-03-30T16:00:00.000Z" title="发表于 2026-03-31 00:00:00">2026-03-31</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/3bb0fc53/" title="MySQL(八)执行计划与查询优化">MySQL(八)执行计划与查询优化</a><time datetime="2026-03-29T16:00:00.000Z" title="发表于 2026-03-30 00:00:00">2026-03-30</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/12331af3/" title="MySQL(七)索引原理与设计">MySQL(七)索引原理与设计</a><time datetime="2026-03-28T16:00:00.000Z" title="发表于 2026-03-29 00:00:00">2026-03-29</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/6d8f8f0/" title="MySQL(六)CTE与窗口函数">MySQL(六)CTE与窗口函数</a><time datetime="2026-03-27T16:00:00.000Z" title="发表于 2026-03-28 00:00:00">2026-03-28</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/55ce38b/" title="MySQL(五)多表查询与子查询">MySQL(五)多表查询与子查询</a><time datetime="2026-03-26T16:00:00.000Z" title="发表于 2026-03-27 00:00:00">2026-03-27</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/80283a7e/" title="MySQL(四)查询基础与聚合">MySQL(四)查询基础与聚合</a><time datetime="2026-03-25T16:00:00.000Z" title="发表于 2026-03-26 00:00:00">2026-03-26</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/4df9aab4/" title="MySQL(三)数据写入与约束">MySQL(三)数据写入与约束</a><time datetime="2026-03-24T16:00:00.000Z" title="发表于 2026-03-25 00:00:00">2026-03-25</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/54906a1/" title="MySQL(二)数据库基础与表设计">MySQL(二)数据库基础与表设计</a><time datetime="2026-03-23T16:00:00.000Z" title="发表于 2026-03-24 00:00:00">2026-03-24</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/2ec898f2/" title="MySQL(一)入门路线">MySQL(一)入门路线</a><time datetime="2026-03-22T16:00:00.000Z" title="发表于 2026-03-23 00:00:00">2026-03-23</time></div></div></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/posts/df8a8a9e/" title="AI 编程工作流插件选型指南"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/%E6%96%87%E7%AB%A0%E9%9A%8F%E6%9C%BA%E5%B0%81%E9%9D%A203.webp" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="AI 编程工作流插件选型指南"/></a><div class="content"><a class="title" href="/posts/df8a8a9e/" title="AI 编程工作流插件选型指南">AI 编程工作流插件选型指南</a><time datetime="2026-08-27T08:24:15.000Z" title="发表于 2026-08-27 16:24:15">2026-08-27</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/posts/18a17ffa/" title="AI 辅助测试(十二)项目实战"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/ai-assisted-testing-course-cover.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="AI 辅助测试(十二)项目实战"/></a><div class="content"><a class="title" href="/posts/18a17ffa/" title="AI 辅助测试(十二)项目实战">AI 辅助测试(十二)项目实战</a><time datetime="2026-08-20T04:00:00.000Z" title="发表于 2026-08-20 12:00:00">2026-08-20</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/posts/f5e80d23/" title="AI 辅助测试(十一)CI流水线"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/ai-assisted-testing-course-cover.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="AI 辅助测试(十一)CI流水线"/></a><div class="content"><a class="title" href="/posts/f5e80d23/" title="AI 辅助测试(十一)CI流水线">AI 辅助测试(十一)CI流水线</a><time datetime="2026-08-19T16:00:00.000Z" title="发表于 2026-08-20 00:00:00">2026-08-20</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/posts/ca1f50ce/" title="AI 辅助测试(十)测试资产验收"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/ai-assisted-testing-course-cover.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="AI 辅助测试(十)测试资产验收"/></a><div class="content"><a class="title" href="/posts/ca1f50ce/" title="AI 辅助测试(十)测试资产验收">AI 辅助测试(十)测试资产验收</a><time datetime="2026-08-19T04:00:00.000Z" title="发表于 2026-08-19 12:00:00">2026-08-19</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/posts/6c305e52/" title="AI 辅助测试(九)缺陷分析与维护"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/ai-assisted-testing-course-cover.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="AI 辅助测试(九)缺陷分析与维护"/></a><div class="content"><a class="title" href="/posts/6c305e52/" title="AI 辅助测试(九)缺陷分析与维护">AI 辅助测试(九)缺陷分析与维护</a><time datetime="2026-08-18T16:00:00.000Z" title="发表于 2026-08-19 00:00:00">2026-08-19</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By 𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮</span></div><div class="footer_custom_text"><p>本站内容仅供学习与研究使用。部分资料来自互联网，如有侵权或不妥，请联系处理。</p>
+<p><a target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> · <a target="_blank" rel="noopener" href="https://butterfly.js.org/">Butterfly</a> · <a target="_blank" rel="noopener" href="https://github.com/koco-co/hexo-blog">站点源码</a> · <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a></p></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.7.0"></script><script src="/js/main.js?v=5.7.0"></script><script src="/js/tw_cn.js?v=5.7.0"></script><script src="/vendor/butterfly/lazyload/lazyload.iife.min.js"></script><div class="js-pjax"><script>(() => {
+  const parseViewBox = viewBox => {
+    if (!viewBox) return null
+    const parts = viewBox.trim().split(/[\s,]+/).map(n => Number(n))
+    if (parts.length !== 4 || parts.some(n => Number.isNaN(n))) return null
+    return parts
+  }
+
+  const getSvgViewBox = svg => {
+    const attr = parseViewBox(svg.getAttribute('viewBox'))
+    if (attr) return attr
+
+    // Fallback: use bbox to build a viewBox
+    try {
+      const bbox = svg.getBBox()
+      if (bbox && bbox.width && bbox.height) return [bbox.x, bbox.y, bbox.width, bbox.height]
+    } catch (e) {
+      // getBBox may fail on some edge cases; ignore
+    }
+
+    const w = Number(svg.getAttribute('width')) || 0
+    const h = Number(svg.getAttribute('height')) || 0
+    if (w > 0 && h > 0) return [0, 0, w, h]
+    return [0, 0, 100, 100]
+  }
+
+  const setSvgViewBox = (svg, vb) => {
+    svg.setAttribute('viewBox', `${vb[0]} ${vb[1]} ${vb[2]} ${vb[3]}`)
+  }
+
+  const clamp = (v, min, max) => Math.max(min, Math.min(max, v))
+
+  const openSvgInNewTab = ({ source, initViewBox }) => {
+    const getClonedSvg = () => {
+      if (typeof source === 'string') {
+        const template = document.createElement('template')
+        template.innerHTML = source.trim()
+        const svg = template.content.querySelector('svg')
+        return svg ? svg.cloneNode(true) : null
+      }
+      if (source && typeof source.cloneNode === 'function') {
+        return source.cloneNode(true)
+      }
+      return null
+    }
+
+    const clone = getClonedSvg()
+    if (!clone) return
+    if (initViewBox && initViewBox.length === 4) {
+      clone.setAttribute('viewBox', initViewBox.join(' '))
+    }
+    if (!clone.getAttribute('xmlns')) clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+    if (!clone.getAttribute('xmlns:xlink') && clone.innerHTML.includes('xlink:')) {
+      clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink')
+    }
+    // inject background to match current theme
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
+    const bg = getComputedStyle(document.body).backgroundColor || (isDark ? '#1e1e1e' : '#ffffff')
+    if (!clone.style.background) clone.style.background = bg
+
+    const serializer = new XMLSerializer()
+    const svgSource = serializer.serializeToString(clone)
+    const htmlSource = `<!doctype html><html><head><meta charset="utf-8" />
+      <style>
+        html, body { width: 100%; height: 100%; margin: 0; display: flex; align-items: center; justify-content: center; background: ${bg}; }
+        svg { max-width: 100%; max-height: 100%; height: auto; width: auto; }
+      </style>
+      </head><body>${svgSource}</body></html>`
+    const blob = new Blob([htmlSource], { type: 'text/html;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    window.open(url, '_blank', 'noopener')
+
+    setTimeout(() => URL.revokeObjectURL(url), 5000)
+  }
+
+  const attachMermaidViewerButton = wrap => {
+    let btn = wrap.querySelector('.mermaid-open-btn')
+    if (!btn) {
+      btn = document.createElement('button')
+      btn.type = 'button'
+      btn.className = 'mermaid-open-btn'
+      wrap.appendChild(btn)
+    }
+
+    btn.innerHTML = '<i class="fa fa-search fa-fw" aria-hidden="true"></i>'
+
+    if (!btn.__mermaidViewerBound) {
+      btn.addEventListener('click', e => {
+        e.preventDefault()
+        e.stopPropagation()
+        const svg = wrap.__mermaidOriginalSvg || wrap.querySelector('svg')
+        if (!svg) return
+        const initViewBox = wrap.__mermaidInitViewBox
+        openSvgInNewTab({ source: svg, initViewBox })
+      })
+      btn.__mermaidViewerBound = true
+    }
+  }
+
+  // Zoom around a point (px, py) in the SVG viewport (in viewBox coordinates)
+  const zoomAtPoint = (vb, factor, px, py) => {
+    const w = vb[2] * factor
+    const h = vb[3] * factor
+    const nx = px - (px - vb[0]) * factor
+    const ny = py - (py - vb[1]) * factor
+    return [nx, ny, w, h]
+  }
+
+  const initMermaidGestures = wrap => {
+    // Clean up previous event listeners and pending frames
+    if (wrap.__mermaidAbortController) {
+      wrap.__mermaidAbortController.abort()
+      if (wrap.__mermaidRafId) cancelAnimationFrame(wrap.__mermaidRafId)
+    }
+    const ac = new AbortController()
+    wrap.__mermaidAbortController = ac
+    const svg = wrap.querySelector('svg')
+    if (!svg) return
+
+    // Ensure viewBox exists so gestures always work
+    const initVb = getSvgViewBox(svg)
+    wrap.__mermaidInitViewBox = initVb
+    wrap.__mermaidCurViewBox = initVb.slice()
+    setSvgViewBox(svg, initVb)
+    // Disable default gestures to prevent scroll chaining and pinch-zoom penetration in Chrome
+    svg.style.touchAction = 'none'
+
+    // Cache BoundingClientRect, throttled on scroll to reduce reflow
+    let cachedRect = svg.getBoundingClientRect()
+    let rectDirty = false
+    const markRectDirty = () => { rectDirty = true }
+    window.addEventListener('resize', markRectDirty, { signal: ac.signal })
+    window.addEventListener('scroll', markRectDirty, { signal: ac.signal, capture: true })
+    const getRect = () => {
+      if (rectDirty) {
+        cachedRect = svg.getBoundingClientRect()
+        rectDirty = false
+      }
+      return cachedRect
+    }
+
+    // Precompute clamp bounds from initial viewBox
+    const minW = initVb[2] * 0.1
+    const maxW = initVb[2] * 10
+    const minH = initVb[3] * 0.1
+    const maxH = initVb[3] * 10
+    const clampVb = vb => {
+      const out = vb.slice()
+      out[2] = clamp(out[2], minW, maxW)
+      out[3] = clamp(out[3], minH, maxH)
+      return out
+    }
+
+    // Throttle DOM updates using requestAnimationFrame
+    let pendingVb = null
+    let rafId = null
+    const applyVb = () => {
+      if (pendingVb) {
+        wrap.__mermaidCurViewBox = pendingVb
+        setSvgViewBox(svg, pendingVb)
+        pendingVb = null
+      }
+      rafId = null
+      wrap.__mermaidRafId = null
+    }
+    const setCurVb = vb => {
+      pendingVb = clampVb(vb)
+      if (!rafId) {
+        rafId = requestAnimationFrame(applyVb)
+        wrap.__mermaidRafId = rafId
+      }
+    }
+
+    const state = {
+      pointers: new Map(),
+      startVb: null,
+      startDist: 0,
+      lastPointerX: 0,
+      lastPointerY: 0
+    }
+
+    const onPointerDown = e => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return
+      svg.setPointerCapture(e.pointerId)
+      const curVb = wrap.__mermaidCurViewBox
+      state.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+      if (state.pointers.size === 1) {
+        state.startVb = curVb.slice()
+        state.lastPointerX = e.clientX
+        state.lastPointerY = e.clientY
+      } else if (state.pointers.size === 2) {
+        const pts = [...state.pointers.values()]
+        const dx = pts[0].x - pts[1].x
+        const dy = pts[0].y - pts[1].y
+        state.startDist = Math.hypot(dx, dy)
+        state.startVb = curVb.slice()
+      }
+    }
+
+    const onPointerMove = e => {
+      if (!state.pointers.has(e.pointerId)) return
+      state.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+      const curVb = wrap.__mermaidCurViewBox
+      const rect = getRect()
+      if (state.pointers.size === 1 && state.startVb) {
+        const p = state.pointers.values().next().value
+        const dxClient = p.x - state.lastPointerX
+        const dyClient = p.y - state.lastPointerY
+        state.lastPointerX = p.x
+        state.lastPointerY = p.y
+        const dx = dxClient * (curVb[2] / rect.width)
+        const dy = dyClient * (curVb[3] / rect.height)
+        setCurVb([curVb[0] - dx, curVb[1] - dy, curVb[2], curVb[3]])
+        return
+      }
+      if (state.pointers.size === 2 && state.startVb && state.startDist > 0) {
+        const pts = [...state.pointers.values()]
+        const dx = pts[0].x - pts[1].x
+        const dy = pts[0].y - pts[1].y
+        const dist = Math.hypot(dx, dy)
+        if (!dist) return
+        const factor = state.startDist / dist
+        const cx = (pts[0].x + pts[1].x) / 2
+        const cy = (pts[0].y + pts[1].y) / 2
+        const px = curVb[0] + (cx - rect.left) * (curVb[2] / rect.width)
+        const py = curVb[1] + (cy - rect.top) * (curVb[3] / rect.height)
+        setCurVb(zoomAtPoint(state.startVb, factor, px, py))
+      }
+    }
+
+    const onPointerUpOrCancel = e => {
+      // Release PointerCapture to avoid event capture anomalies
+      if (svg.hasPointerCapture && svg.hasPointerCapture(e.pointerId)) {
+        svg.releasePointerCapture(e.pointerId)
+      }
+      state.pointers.delete(e.pointerId)
+      if (state.pointers.size === 0) {
+        state.startVb = null
+        state.startDist = 0
+      } else if (state.pointers.size === 1) {
+        const p = state.pointers.values().next().value
+        state.lastPointerX = p.x
+        state.lastPointerY = p.y
+      }
+    }
+
+    const onWheel = e => {
+      // Prevent event bubbling from triggering external scroll
+      e.preventDefault()
+      e.stopPropagation()
+      // Normalize deltaY across deltaMode (Chrome uses pixels, Safari uses lines)
+      let delta = e.deltaY
+      if (e.deltaMode === 1) delta *= 16
+      else if (e.deltaMode === 2) delta *= 400
+
+      // Continuous zoom factor: smoother than fixed 1.1/0.9 steps
+      const zoomFactor = Math.pow(1.001, delta)
+
+      const curVb = wrap.__mermaidCurViewBox
+      const rect = getRect()
+      const px = curVb[0] + (e.clientX - rect.left) * (curVb[2] / rect.width)
+      const py = curVb[1] + (e.clientY - rect.top) * (curVb[3] / rect.height)
+      setCurVb(zoomAtPoint(curVb, zoomFactor, px, py))
+    }
+
+    const onDblClick = () => {
+      const init = wrap.__mermaidInitViewBox
+      if (init) setCurVb(init)
+    }
+
+    svg.addEventListener('pointerdown', onPointerDown, { signal: ac.signal })
+    svg.addEventListener('pointermove', onPointerMove, { signal: ac.signal })
+    svg.addEventListener('pointerup', onPointerUpOrCancel, { signal: ac.signal })
+    svg.addEventListener('pointercancel', onPointerUpOrCancel, { signal: ac.signal })
+    svg.addEventListener('wheel', onWheel, { passive: false, signal: ac.signal })
+    svg.addEventListener('dblclick', onDblClick, { signal: ac.signal })
+  }
+
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      // Clean up event listeners before removing old SVG
+      if (item.__mermaidAbortController) {
+        item.__mermaidAbortController.abort()
+      }
+      const oldSvg = item.querySelector('svg')
+      if (oldSvg) oldSvg.remove()
+      let config = {}
+      try {
+        config = mermaidSrc.dataset.config ? JSON.parse(mermaidSrc.dataset.config) : {}
+      } catch (e) {
+        console.warn('[mermaid] failed to parse dataset.config:', e)
+      }
+      if (!config.theme) {
+        config.theme = theme
+      }
+      const mermaidThemeConfig = `%%{init: ${JSON.stringify(config)}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+        if (true) initMermaidGestures(item)
+        item.__mermaidOriginalSvg = svg
+        if (true) attachMermaidViewerButton(item)
+      }
+
+      const handleError = err => {
+        console.error(`[mermaid] render failed for block #${index}:`, err)
+        const errorEl = document.createElement('div')
+        errorEl.className = 'mermaid-error'
+        errorEl.textContent = `Mermaid render error: ${err.message || err}`
+        mermaidSrc.insertAdjacentElement('afterend', errorEl)
+      }
+
+      try {
+        const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+        // mermaid v9 and v10 compatibility
+        if (typeof renderFn === 'string') {
+          renderMermaid(renderFn)
+        } else {
+          renderFn.then(({ svg }) => renderMermaid(svg)).catch(handleError)
+        }
+      } catch (err) {
+        handleError(err)
+      }
+    })
+  }
+
+  const codeToMermaid = $article => {
+    const codeMermaidEle = $article.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    const $article = document.getElementById('article-container')
+    if (!$article) return
+
+    if (false) codeToMermaid($article)
+    const $mermaid = $article.querySelectorAll('.mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('/vendor/butterfly/mermaid/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const applyThemeDefaultsConfig = theme => {
+    if (theme === 'dark-mode') {
+      Chart.defaults.color = "rgba(255, 255, 255, 0.8)"
+      Chart.defaults.borderColor = "rgba(255, 255, 255, 0.2)"
+      Chart.defaults.scale.ticks.backdropColor = "transparent"
+    } else {
+      Chart.defaults.color = "rgba(0, 0, 0, 0.8)"
+      Chart.defaults.borderColor = "rgba(0, 0, 0, 0.1)"
+      Chart.defaults.scale.ticks.backdropColor = "transparent"
+    }
+  }
+
+  // Recursively traverse the config object and automatically apply theme-specific color schemes
+  const applyThemeConfig = (obj, theme) => {
+    if (typeof obj !== 'object' || obj === null) return
+
+    Object.keys(obj).forEach(key => {
+      const value = obj[key]
+      // If the property is an object and has theme-specific options, apply them
+      if (typeof value === 'object' && value !== null) {
+        if (value[theme]) {
+          obj[key] = value[theme] // Apply the value for the current theme
+        } else {
+          // Recursively process child objects
+          applyThemeConfig(value, theme)
+        }
+      }
+    })
+  }
+
+  const runChartJS = ele => {
+    window.loadChartJS = true
+
+    Array.from(ele).forEach((item, index) => {
+      const chartSrc = item.firstElementChild
+      const chartID = item.getAttribute('data-chartjs-id') || ('chartjs-' + index) // Use custom ID or default ID
+      const width = item.getAttribute('data-width')
+      const existingCanvas = document.getElementById(chartID)
+
+      // If a canvas already exists, remove it to avoid rendering duplicates
+      if (existingCanvas) {
+          existingCanvas.parentNode.remove()
+      }
+
+      const chartDefinition = chartSrc.textContent
+      const canvas = document.createElement('canvas')
+      canvas.id = chartID
+
+      const div = document.createElement('div')
+      div.className = 'chartjs-wrap'
+
+      if (width) {
+        div.style.width = width
+      }
+
+      div.appendChild(canvas)
+      chartSrc.insertAdjacentElement('afterend', div)
+
+      const ctx = document.getElementById(chartID).getContext('2d')
+
+      const config = JSON.parse(chartDefinition)
+
+      const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark-mode' : 'light-mode'
+
+      // Set default styles (initial setup)
+      applyThemeDefaultsConfig(theme)
+
+      // Automatically traverse the config and apply dual-mode color schemes
+      applyThemeConfig(config, theme)
+
+      new Chart(ctx, config)
+    })
+  }
+
+  const loadChartJS = () => {
+    const chartJSEle = document.querySelectorAll('#article-container .chartjs-container')
+    if (chartJSEle.length === 0) return
+
+    window.loadChartJS ? runChartJS(chartJSEle) : btf.getScript('/vendor/butterfly/chartjs/chart.umd.min.js').then(() => runChartJS(chartJSEle))
+  }
+
+  // Listen for theme change events
+  btf.addGlobalFn('themeChange', loadChartJS, 'chartjs')
+  btf.addGlobalFn('encrypt', loadChartJS, 'chartjs')
+
+  window.pjax ? loadChartJS() : document.addEventListener('DOMContentLoaded', loadChartJS)
+})()</script><script>(() => {
+  const abcjsInit = () => {
+    const abcjsFn = () => {
+      const $article = document.getElementById("article-container")
+      if (!$article || $article.querySelector(".hbe-container")) return
+
+      setTimeout(() => {
+        const sheets = $article.querySelectorAll(".abc-music-sheet")
+        for (let i = 0; i < sheets.length; i++) {
+          const ele = sheets[i]
+          if (ele.children.length > 0) continue
+
+          // Parse parameters from data-params attribute
+          let params = {}
+          const dp = ele.getAttribute("data-params")
+          if (dp) {
+            try {
+              params = JSON.parse(dp)
+            } catch (e) {
+              console.error("Failed to parse data-params:", e)
+            }
+          }
+
+          // Merge parsed parameters with the responsive option
+          // Ensures params content appears before responsive
+          const options = { ...params, responsive: "resize" }
+
+          // Render the music score using ABCJS.renderAbc
+          ABCJS.renderAbc(ele, ele.textContent, options)
+        }
+      }, 100)
+    }
+
+    if (typeof ABCJS === "object" && ABCJS !== null) {
+      abcjsFn()
+    } else {
+      btf.getScript("/vendor/butterfly/abcjs/abcjs-basic-min.js").then(abcjsFn)
+    }
+  }
+
+  if (window.pjax) {
+    abcjsInit()
+  } else {
+    window.addEventListener("load", abcjsInit)
+  }
+
+  btf.addGlobalFn("encrypt", abcjsInit, "abcjs")
+})()</script></div><canvas id="universe" aria-hidden="true"></canvas><script defer src="/js/universe.js"></script><script defer src="/js/tag-heatmap.js"></script><script defer src="/js/external-media-consent.js"></script><script defer src="/js/giscus-consent.js"></script><script defer src="/js/flashcard-sync-nav.js"></script><script src="/vendor/butterfly/pjax/pjax.min.js" defer="defer"></script><script>document.addEventListener('DOMContentLoaded', () => {
+  const pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+
+  window.pjax = new Pjax({
+    elements: 'a:not([target="_blank"]):not([data-fancybox])',
+    selectors: pjaxSelectors,
+    cacheBust: false,
+    analytics: false,
+    scrollRestoration: false
+  })
+
+  const triggerPjaxFn = (val) => {
+    if (!val) return
+    Object.values(val).forEach(fn => {
+      try {
+        fn()
+      } catch (err) {
+        console.debug('Pjax callback failed:', err)
+      }
+    })
+  }
+
+  document.addEventListener('pjax:send', () => {
+    // removeEventListener
+    btf.removeGlobalFnEvent('pjaxSendOnce')
+    btf.removeGlobalFnEvent('themeChange')
+
+    // reset readmode
+    const $bodyClassList = document.body.classList
+    if ($bodyClassList.contains('read-mode')) $bodyClassList.remove('read-mode')
+
+    triggerPjaxFn(window.globalFn.pjaxSend)
+  })
+
+  document.addEventListener('pjax:complete', () => {
+    btf.removeGlobalFnEvent('pjaxCompleteOnce')
+    document.querySelectorAll('script[data-pjax]').forEach(item => {
+      if (!item.parentNode) return
+      const newScript = document.createElement('script')
+      const content = item.text || item.textContent || ''
+      Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+      newScript.appendChild(document.createTextNode(content))
+      item.parentNode.replaceChild(newScript, item)
+    })
+
+    triggerPjaxFn(window.globalFn.pjaxComplete)
+  })
+
+  document.addEventListener('pjax:error', e => {
+    const responseURL = e.request && e.request.responseURL
+    if (e.request && e.request.status === 404) {
+      true
+        ? pjax.loadUrl('/404.html')
+        : responseURL && (window.location.href = responseURL)
+    } else if (responseURL) {
+      window.location.href = responseURL
+    }
+  })
+})</script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="输入关键词..." type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js?v=5.7.0"></script></div></div><!-- hexo injector body_end start --><script defer src="/flashcard-assets/ts-fsrs.umd.js"></script><script defer src="/flashcard-assets/flashcard-queue.js"></script><script id="hfc-sync-config-data" type="application/json">{"enabled":true,"url":"https://hkqqjttiqhwfdintqxpx.supabase.co","publishableKey":"sb_publishable_BYiAsjvfObJ1Kj26-YkVeQ_x4ruAFc4"}</script><script defer src="/flashcard-assets/supabase.js"></script><script defer src="/flashcard-assets/flashcard-sync.js"></script><script defer src="/flashcard-assets/flashcard.js"></script><!-- hexo injector body_end end --></body></html>

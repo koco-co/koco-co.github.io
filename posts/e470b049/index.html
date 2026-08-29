@@ -1,0 +1,1394 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>计算机网络(八)进阶路线 | 𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮'𝓼 𝓦𝓸𝓻𝓴𝓢𝓹𝓪𝓬𝓮</title><meta name="author" content="𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮"><meta name="copyright" content="𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="ffffff"><meta name="description" content="在主线完成后，用 WebSocket、DoH&#x2F;DoT、IPsec、VXLAN 以及 QoS、组播、路由和 WebDAV 扩展网络视野，并明确每个主题的层次、取舍和进入条件。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="计算机网络(八)进阶路线">
+<meta property="og:url" content="https://koco-co.github.io/posts/e470b049/index.html">
+<meta property="og:site_name" content="𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮&#39;𝓼 𝓦𝓸𝓻𝓴𝓢𝓹𝓪𝓬𝓮">
+<meta property="og:description" content="在主线完成后，用 WebSocket、DoH&#x2F;DoT、IPsec、VXLAN 以及 QoS、组播、路由和 WebDAV 扩展网络视野，并明确每个主题的层次、取舍和进入条件。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://koco-co.github.io/img/picgo-images/computer-network-course-cover.png">
+<meta property="article:published_time" content="2026-03-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-08-29T15:00:10.012Z">
+<meta property="article:author" content="𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮">
+<meta property="article:tag" content="WebSocket">
+<meta property="article:tag" content="网络安全">
+<meta property="article:tag" content="计算机网络">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://koco-co.github.io/img/picgo-images/computer-network-course-cover.png"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "计算机网络(八)进阶路线",
+  "url": "https://koco-co.github.io/posts/e470b049/",
+  "image": "https://koco-co.github.io/img/picgo-images/computer-network-course-cover.png",
+  "datePublished": "2026-03-07T16:00:00.000Z",
+  "dateModified": "2026-08-29T15:00:10.012Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮",
+      "url": "https://koco-co.github.io"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.ico"><link rel="canonical" href="https://koco-co.github.io/posts/e470b049/index.html"><link rel="preconnect"/><link rel="stylesheet" href="/css/index.css?v=5.7.0"><link rel="stylesheet" href="/vendor/butterfly/fontawesome/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        const data = { value }
+
+        if (ttl != null) {
+          data.expiry = Date.now() + ttl * 86400000
+        }
+
+        localStorage.setItem(key, JSON.stringify(data))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return
+
+        try {
+          const data = JSON.parse(itemStr)
+
+          if (data.expiry && Date.now() > data.expiry) {
+            localStorage.removeItem(key)
+            return
+          }
+
+          return data.value
+        } catch {
+          localStorage.removeItem(key)
+        }
+      }
+    }
+
+    const scriptCache = new Map()
+    const cssCache = new Map()
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => {
+        if (scriptCache.has(url)) {
+          return scriptCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+
+          script.src = url
+          script.async = true
+
+          for (const key in attr) {
+            script.setAttribute(key, attr[key])
+          }
+
+          script.onload = resolve
+          script.onerror = reject
+
+          document.head.appendChild(script)
+        })
+
+        scriptCache.set(url, promise)
+
+        return promise
+      },
+      getCSS: (url, id) => {
+        if (cssCache.has(url)) {
+          return cssCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const link = document.createElement('link')
+
+          link.rel = 'stylesheet'
+          link.href = url
+
+          if (id) {
+            link.id = id
+          }
+
+          link.onload = resolve
+          link.onerror = reject
+
+          document.head.appendChild(link)
+        })
+
+        cssCache.set(url, promise)
+
+        return promise
+      },
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!true && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+      const activateDarkMode = () => {
+        document.documentElement.dataset.theme = 'dark'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.dataset.theme = 'light'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', 'ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const mediaQueryDark = window.matchMedia('(prefers-color-scheme: dark)')
+          const mediaQueryLight = window.matchMedia('(prefers-color-scheme: light)')
+
+          if (theme === undefined) {
+            if (mediaQueryLight.matches) activateLightMode()
+            else if (mediaQueryDark.matches) activateDarkMode()
+            else {
+              const hour = new Date().getHours()
+              const start = 10
+              const end = 22
+              const isNight =
+                start < end
+                    ? hour < start || hour >= end
+                    : hour >= start || hour < end
+              isNight ? activateDarkMode() : activateLightMode()
+            }
+            mediaQueryDark.addEventListener('change', e => {
+              if (saveToLocal.get('theme') === undefined) {
+                e.matches ? activateDarkMode() : activateLightMode()
+              }
+            })
+          } else {
+            theme === 'light' ? activateLightMode() : activateDarkMode()
+          }
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":true,"pagination":{"enable":true,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":300,"highlightFullpage":false,"highlightMacStyle":true},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: '/vendor/butterfly/infinitegrid/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: true,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '计算机网络(八)进阶路线',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/custom.css"><link rel="stylesheet" href="/css/universe.css"><link rel="stylesheet" href="/css/page-archive-categories-tags.css"><link rel="stylesheet" href="/css/post-tags.css"><link rel="stylesheet" href="/css/external-media.css"><!-- hexo injector head_end start --><link rel="stylesheet" href="/flashcard-assets/flashcard.css"><link rel="stylesheet" href="/vendor/tag-plugins-plus/font-awesome-animation.min.css" media="defer" onload="this.media='all'"><link rel="stylesheet" href="/vendor/tag-plugins-plus/tag-plugins.css" media="defer" onload="this.media='all'"><script src="/vendor/tag-plugins-plus/carousel-touch.js"></script><!-- hexo injector head_end end --><meta name="generator" content="Hexo 8.1.2"></head><body><div class="bg-animation" id="web_bg" style="background-image: url(/img/background.jpg);"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/sisyphus-vale-avatar.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">232</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">157</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">23</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><span class="site-page group hide"><i class="fa-fw fas fa-book"></i><span> 文章</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/learn-topic/"><i class="fa-fw fas fa-graduation-cap"></i><span> 复习</span></a></div><div class="menus_item"><a class="site-page" href="/video/"><i class="fa-fw fas fa-video"></i><span> 视频</span></a></div><div class="menus_item"><a class="site-page" href="/wallpaper/"><i class="fa-fw fas fa-image"></i><span> 照片</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(/img/picgo-images/computer-network-course-cover.png);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮'𝓼 𝓦𝓸𝓻𝓴𝓢𝓹𝓪𝓬𝓮</span></a><a class="nav-page-title" href="/"><span class="site-name">计算机网络(八)进阶路线</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><span class="site-page group hide"><i class="fa-fw fas fa-book"></i><span> 文章</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/learn-topic/"><i class="fa-fw fas fa-graduation-cap"></i><span> 复习</span></a></div><div class="menus_item"><a class="site-page" href="/video/"><i class="fa-fw fas fa-video"></i><span> 视频</span></a></div><div class="menus_item"><a class="site-page" href="/wallpaper/"><i class="fa-fw fas fa-image"></i><span> 照片</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">计算机网络(八)进阶路线<a class="post-edit-link" href="https://github.com/koco-co/hexo-blog/edit/main/source/_posts/learn-topic/computer-network/计算机网络(八)进阶路线.md" title="编辑" target="_blank"><i class="fas fa-pencil-alt"></i></a></h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-03-07T16:00:00.000Z" title="发表于 2026-03-08 00:00:00">2026-03-08</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-08-29T15:00:10.012Z" title="更新于 2026-08-29 23:00:10">2026-08-29</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Learn-Topic/">Learn Topic</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Learn-Topic/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/">计算机网络</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">4.9k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>16分钟</span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><nav class="course-series-nav" aria-label="计算机网络 文章进度"><div class="course-series-nav__header"><div class="course-series-nav__heading"><strong>计算机网络 文章进度</strong></div></div><div class="course-series-nav__progress" role="progressbar" aria-label="文章进度" aria-valuemin="1" aria-valuemax="9" aria-valuenow="8"><span style="width: 88.8889%"></span></div><ol class="course-series-nav__list"><li class="course-series-nav__item"><a href="/posts/347ce4f2/"><span class="course-series-nav__index">01</span><span class="course-series-nav__title">计算机网络(一)入门路线</span></a></li><li class="course-series-nav__item"><a href="/posts/474f4d81/"><span class="course-series-nav__index">02</span><span class="course-series-nav__title">计算机网络(二)网络分层与局域网</span></a></li><li class="course-series-nav__item"><a href="/posts/5bd659bc/"><span class="course-series-nav__index">03</span><span class="course-series-nav__title">计算机网络(三)IP 与网络寻址</span></a></li><li class="course-series-nav__item"><a href="/posts/ec8f5dd0/"><span class="course-series-nav__index">04</span><span class="course-series-nav__title">计算机网络(四)UDP 与 TCP</span></a></li><li class="course-series-nav__item"><a href="/posts/366484e7/"><span class="course-series-nav__index">05</span><span class="course-series-nav__title">计算机网络(五)HTTP 协议</span></a></li><li class="course-series-nav__item"><a href="/posts/36cb963b/"><span class="course-series-nav__index">06</span><span class="course-series-nav__title">计算机网络(六)HTTPS 与现代 HTTP</span></a></li><li class="course-series-nav__item"><a href="/posts/61ba71fc/"><span class="course-series-nav__index">07</span><span class="course-series-nav__title">计算机网络(七)抓包与网络排障</span></a></li><li class="course-series-nav__item is-current"><a href="/posts/e470b049/" aria-current="page"><span class="course-series-nav__index">08</span><span class="course-series-nav__title">计算机网络(八)进阶路线</span></a></li><li class="course-series-nav__item"><a href="/posts/e25e16df/"><span class="course-series-nav__index">09</span><span class="course-series-nav__title">计算机网络(九)综合实战</span></a></li></ol></nav>
+
+<div class="note info flat"><p>主线已经建立 HTTP、TCP、TLS、IP 和排障模型；本文把 WebSocket、DoH&#x2F;DoT、IPsec、VXLAN 以及网络治理和 HTTP 扩展放回各自的层次，解释它们解决什么问题、引入什么边界，以及何时值得继续深入。</p>
+</div>
+
+<h2 id="扩展协议地图"><a href="#扩展协议地图" class="headerlink" title="扩展协议地图"></a>扩展协议地图</h2><h3 id="先定位“改变了哪一层”"><a href="#先定位“改变了哪一层”" class="headerlink" title="先定位“改变了哪一层”"></a>先定位“改变了哪一层”</h3><div class="mermaid-wrap"><pre class="mermaid-src" data-config="{}" hidden>
+    flowchart TD
+  MAIN[主线：DNS&#x2F;IP&#x2F;TCP&#x2F;TLS&#x2F;HTTP&#x2F;排障]
+  MAIN --&gt; WS[WebSocket：应用层升级与消息帧]
+  MAIN --&gt; DOH[DoH&#x2F;DoT：DNS 查询的安全承载]
+  MAIN --&gt; IPSEC[IPsec：IP 层安全架构]
+  MAIN --&gt; VXLAN[VXLAN：数据中心二层覆盖到三层 underlay]
+  WS --&gt;|依赖 HTTP Upgrade、TLS、浏览器 Origin| HTTPBASE[HTTP&#x2F;TLS 基础]
+  DOH --&gt;|依赖 DNS、TLS&#x2F;HTTP、证书| NAME[名称解析基础]
+  IPSEC --&gt;|依赖 IP、路由、密钥协商| IPBASE[IP 基础]
+  VXLAN --&gt;|依赖以太网、UDP、路由和 MTU| FABRIC[局域网与 IP 基础]
+  </pre></div>
+
+<table>
+<thead>
+<tr>
+<th>主题</th>
+<th>它扩展的对象</th>
+<th>先学什么</th>
+<th>不要把它误认为</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>WebSocket</td>
+<td>HTTP 之后的双向应用消息</td>
+<td>HTTP Upgrade、TLS、浏览器 Origin</td>
+<td>“TCP 自动变成消息队列”</td>
+</tr>
+<tr>
+<td>DoH</td>
+<td>DNS 查询通过 HTTPS 发送</td>
+<td>DNS 递归、HTTPS、HTTP&#x2F;2&#x2F;3</td>
+<td>“所有 DNS 都被隐藏”</td>
+</tr>
+<tr>
+<td>DoT</td>
+<td>DNS 查询通过 TLS 长连接发送</td>
+<td>DNS、TLS、端口 853 语境</td>
+<td>“比 DoH 在所有网络都更快”</td>
+</tr>
+<tr>
+<td>IPsec</td>
+<td>IP 包的认证&#x2F;加密和隧道</td>
+<td>路由、策略、密钥管理</td>
+<td>“TLS 的另一个名字”</td>
+</tr>
+<tr>
+<td>VXLAN</td>
+<td>二层帧跨三层网络的覆盖封装</td>
+<td>VLAN、UDP、MTU、VTEP</td>
+<td>“把任何二层网络无限延伸”</td>
+</tr>
+</tbody></table>
+<h2 id="应用协议"><a href="#应用协议" class="headerlink" title="应用协议"></a>应用协议</h2><h3 id="WebSocket-的升级边界"><a href="#WebSocket-的升级边界" class="headerlink" title="WebSocket 的升级边界"></a>WebSocket 的升级边界</h3><div class="note info flat"><p>WebSocket 通常从 HTTP&#x2F;1.1 Upgrade 请求开始，服务端返回 101 Switching Protocols 后，双方不再把后续字节当作普通 HTTP 请求&#x2F;响应，而是进入 WebSocket 帧语义。它仍然依赖底层 TCP（或安全的 wss 连接依赖 TLS），但应用层消息边界由 WebSocket 帧定义。</p>
+</div>
+
+<div class="mermaid-wrap"><pre class="mermaid-src" data-config="{}" hidden>
+    sequenceDiagram
+  participant B as 浏览器
+  participant S as WebSocket 服务
+  B-&gt;&gt;S: GET &#x2F;chat + Upgrade: websocket + Sec-WebSocket-Key
+  S--&gt;&gt;B: 101 Switching Protocols + Sec-WebSocket-Accept
+  B-&gt;&gt;S: WebSocket text&#x2F;binary frame
+  S--&gt;&gt;B: WebSocket frame
+  Note over B,S: 后续不再按普通 HTTP 请求&#x2F;响应配对
+  </pre></div>
+
+<p>关键边界：</p>
+<ul>
+<li>101 是升级握手的 HTTP 结果，不是普通业务成功码；</li>
+<li>WebSocket 有自己的帧、ping&#x2F;pong、close 和掩码规则；</li>
+<li>浏览器会携带 Origin，服务端需要在应用层决定是否允许来源；</li>
+<li>代理、负载均衡、空闲超时和连接复用策略都可能影响长连接；</li>
+<li>WebSocket 不自动提供消息持久化、重试、顺序业务语义或鉴权撤销。</li>
+</ul>
+<div class="note info flat"><p>复现时先用服务端和客户端都明确支持 WebSocket 的测试夹具；只用 curl 发一个 Upgrade 头，不代表已经完成了后续 WebSocket 帧通信。观察 101、连接保持、ping&#x2F;pong 和 close 时序，比只看页面“连接成功”更有证据价值。</p>
+</div>
+
+<h3 id="DoH-与-DoT-的取舍"><a href="#DoH-与-DoT-的取舍" class="headerlink" title="DoH 与 DoT 的取舍"></a>DoH 与 DoT 的取舍</h3><div class="note info flat"><p>DoH 把 DNS 查询放进 HTTPS，通常复用 HTTP&#x2F;2 或 HTTP&#x2F;3 的连接和端口；DoT 把 DNS 查询放进 TLS，通常使用专用的 TLS 服务端口。二者都能保护客户端到指定解析器之间的查询内容，但不能自动隐藏访问目标、终端行为、解析器日志或后续连接。</p>
+</div>
+
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>DoH</th>
+<th>DoT</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>承载</td>
+<td>HTTPS</td>
+<td>TLS 上的 DNS</td>
+</tr>
+<tr>
+<td>常见入口</td>
+<td>与 Web 流量相近的 HTTPS 端口</td>
+<td>专用 DNS over TLS 端口</td>
+</tr>
+<tr>
+<td>中间网络可见性</td>
+<td>更像普通 HTTPS，策略识别更难</td>
+<td>更容易按专用端口识别&#x2F;治理</td>
+</tr>
+<tr>
+<td>部署形态</td>
+<td>浏览器、操作系统或应用指定 HTTPS resolver</td>
+<td>系统 resolver 或网络设备指定 TLS resolver</td>
+</tr>
+<tr>
+<td>取舍</td>
+<td>易穿过只允许 Web 的网络，但可能集中化</td>
+<td>语义直接、网络治理清晰，但专用端口可能被阻断</td>
+</tr>
+</tbody></table>
+<div class="note warning flat"><p>选择时要问：谁运营解析器、失败时是否回退明文、如何验证证书、是否需要企业审计和家长控制、客户端是否会绕过本地策略。不要把“加密了 DNS”扩展成“端到端所有流量都匿名”。</p>
+</div>
+
+<h3 id="名称解析和连接证据"><a href="#名称解析和连接证据" class="headerlink" title="名称解析和连接证据"></a>名称解析和连接证据</h3><div class="note primary flat"><p>DoH&#x2F;DoT 解决的是 DNS 查询承载，不能替代后续目标服务的 TCP&#x2F;QUIC、TLS 和 HTTP 证据。排障时可以把链路拆成：应用选择 resolver → 解析器返回地址 → 客户端连接地址 → 目标服务建立安全协议。若只看到 DoH 成功，不代表目标 IP 可达。</p>
+</div>
+
+<h2 id="网络安全与覆盖"><a href="#网络安全与覆盖" class="headerlink" title="网络安全与覆盖"></a>网络安全与覆盖</h2><h3 id="IPsec-的安全模型"><a href="#IPsec-的安全模型" class="headerlink" title="IPsec 的安全模型"></a>IPsec 的安全模型</h3><div class="note primary flat"><p>IPsec 在 IP 层提供安全架构，核心是按策略决定哪些流量需要保护，并通过安全关联和密钥管理确定如何认证&#x2F;加密。ESP 可以提供机密性、完整性和认证等能力；AH 关注认证&#x2F;完整性但在 NAT 等环境中有现实边界。传输模式通常保护 IP 载荷，隧道模式把整个原始 IP 包封装进新的 IP 包。</p>
+</div>
+
+<div class="mermaid-wrap"><pre class="mermaid-src" data-config="{}" hidden>
+    flowchart LR
+  POLICY[安全策略选择流量] --&gt; SA[Security Association 与密钥]
+  SA --&gt; ESP[ESP&#x2F;AH 处理]
+  ESP --&gt; TRANS[传输模式：保护载荷]
+  ESP --&gt; TUNNEL[隧道模式：封装原始 IP 包]
+  TUNNEL --&gt; PEER[对端解封装并按策略交付]
+  </pre></div>
+
+<div class="note warning flat"><p>IPsec 与 TLS 的边界不同：TLS 通常由应用连接端点或代理终止，IPsec 可以保护一段网络到网络、主机到网络的 IP 路径。两者可以叠加，也可能由不同团队、设备和信任域管理。看到“隧道建立”不能直接推断应用授权和端点身份已经完成。</p>
+</div>
+
+<h3 id="VXLAN-隧道"><a href="#VXLAN-隧道" class="headerlink" title="VXLAN 隧道"></a>VXLAN 隧道</h3><div class="note info flat"><p>VXLAN 用 VNI 标识覆盖网络，把原始二层帧封装在 UDP&#x2F;IP 外层，常见 VTEP 负责封装和解封装。底层 underlay 只需要为 VTEP 之间提供三层可达性，overlay 则让虚拟机或租户看到逻辑二层网络。</p>
+</div>
+
+<div class="mermaid-wrap"><pre class="mermaid-src" data-config="{}" hidden>
+    flowchart LR
+  VM1[租户主机 A] --&gt; VTEP1[VTEP 1]
+  VTEP1 --&gt;|外层 IP&#x2F;UDP + VNI| UNDERLAY[三层 Underlay]
+  UNDERLAY --&gt; VTEP2[VTEP 2]
+  VTEP2 --&gt; VM2[租户主机 B]
+  VTEP1 -.Overlay 广播&#x2F;组播或控制面学习.-&gt; VTEP2
+  </pre></div>
+
+<div class="note primary flat"><p>VXLAN 的排障重点包括 VTEP 外层 IP 可达性、UDP 端口、VNI、封装后的 MTU、控制面&#x2F;数据面学习和跨租户隔离。它不是让二层广播消失的魔法；广播、未知单播和组播在 overlay 中仍需要复制、控制面或硬件策略，规模化时必须关注泛洪范围。</p>
+</div>
+
+<h2 id="网络治理与协议扩展"><a href="#网络治理与协议扩展" class="headerlink" title="网络治理与协议扩展"></a>网络治理与协议扩展</h2><h3 id="DSCP-与-QoS"><a href="#DSCP-与-QoS" class="headerlink" title="DSCP 与 QoS"></a>DSCP 与 QoS</h3><div class="note info flat"><p>DSCP 位于 IP 服务质量字段，表达流量分类或转发处理意图；它不是带宽保证，也不是加密认证。标记是否被保留、队列是否按标记配置、运营商是否重写，都要在具体路径上验证。抓包中看见 DSCP 值，只能证明包带了标记，不能证明获得了某种时延或带宽。</p>
+</div>
+
+<h3 id="IPv4-组播"><a href="#IPv4-组播" class="headerlink" title="IPv4 组播"></a>IPv4 组播</h3><div class="note warning flat"><p>IPv4 组播让一个发送者面向组地址发送，接收者通过组成员关系加入；它不同于广播，也不是自动跨所有路由器传播。交换机、IGMP、路由协议和边界策略决定组播是否有效。测试时应使用授权的隔离组地址和明确 TTL，避免产生不可控的跨网流量。</p>
+</div>
+
+<h3 id="OSPF-与-BGP"><a href="#OSPF-与-BGP" class="headerlink" title="OSPF 与 BGP"></a>OSPF 与 BGP</h3><div class="note info flat"><p>OSPF 常用于自治系统内部的链路状态路由，BGP 用于自治系统之间以及更广泛的策略路由。它们影响的是路由控制平面，不是 TCP 三次握手的替代品。遇到“某个前缀走错路”时，先看路由表和下一跳，再根据网络权限进入邻居、策略、前缀通告和收敛证据。</p>
+</div>
+
+<h3 id="WebDAV-与-102"><a href="#WebDAV-与-102" class="headerlink" title="WebDAV 与 102"></a>WebDAV 与 102</h3><div class="note primary flat"><p>WebDAV 扩展了 HTTP 的资源管理方法和属性语义，102 Processing 是其历史语境中的处理中状态；它们不能被当作普通 API 的通用状态或方法约定。使用新方法或状态时，应查规范和 IANA 注册表，并说明客户端、代理和服务端是否真正支持。</p>
+</div>
+
+<h3 id="扩展主题的边界"><a href="#扩展主题的边界" class="headerlink" title="扩展主题的边界"></a>扩展主题的边界</h3><div class="note info flat"><p>面对一个陌生协议时，先确定它回答的问题、所属层次、官方规范、关系图和可复现实验。旧笔记可以帮助发现问题，但不能替代当前规范；“已经写进文章”也不能替代构建、浏览器和真实环境证据。</p>
+</div>
+
+<h2 id="选择进阶主题"><a href="#选择进阶主题" class="headerlink" title="选择进阶主题"></a>选择进阶主题</h2><h3 id="进入条件"><a href="#进入条件" class="headerlink" title="进入条件"></a>进入条件</h3><table>
+<thead>
+<tr>
+<th>如果你正在解决</th>
+<th>先回到</th>
+<th>只有出现这些证据时再进入进阶</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>页面实时推送断开</td>
+<td>TCP&#x2F;TLS&#x2F;HTTP 与连接超时</td>
+<td>101 成功但帧、ping&#x2F;pong、代理空闲策略仍需分析</td>
+</tr>
+<tr>
+<td>DNS 被拦截或隐私要求</td>
+<td>DNS、证书和 resolver 策略</td>
+<td>需要选择 DoH&#x2F;DoT 的治理和承载方式</td>
+</tr>
+<tr>
+<td>跨网络安全互联</td>
+<td>IP、路由、密钥和策略</td>
+<td>需要网络层隧道或网段到网段保护</td>
+</tr>
+<tr>
+<td>数据中心租户网络</td>
+<td>VLAN、MTU、路由和 underlay</td>
+<td>需要覆盖二层、VNI、VTEP 和大规模隔离</td>
+</tr>
+</tbody></table>
+<h3 id="复习卡片"><a href="#复习卡片" class="headerlink" title="复习卡片"></a>复习卡片</h3><div class="note info flat"><p>下面的卡片用于回忆方法、Cookie、QUIC、证书和排障边界，再把这些概念用于进阶主题：</p>
+</div>
+
+<article class="hfc-flip hfc-inline" data-hfc-flip data-hfc-inline data-card-id="CN-HTTP-004" tabindex="0">
+
+  <div class="hfc-flip__inner" data-hfc-flip-inner>
+    <div class="hfc-face hfc-face--front" data-hfc-face="front">
+      <div class="hfc-card-head"><span class="hfc-number">Q01</span><a class="hfc-priority hfc-priority--1" href="/learn-topic/?priority=1" title="筛选高频题" aria-label="筛选高频题">高频</a></div>
+      <div class="hfc-topics"><a class="hfc-topic" href="/learn-topic/?deck=%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C">#计算机网络</a><a class="hfc-topic" href="/learn-topic/?tag=HTTP">#HTTP</a><a class="hfc-topic" href="/learn-topic/?tag=GET">#GET</a><a class="hfc-topic" href="/learn-topic/?tag=POST">#POST</a><a class="hfc-topic" href="/learn-topic/?tag=PUT">#PUT</a><a class="hfc-topic" href="/learn-topic/?tag=PATCH">#PATCH</a></div>
+      <div class="hfc-question"><p>GET、POST、PUT、PATCH、DELETE 的核心边界是什么？</p>
+</div>
+      <span class="hfc-flip-hint">点击查看答案</span>
+    </div>
+    <div class="hfc-face hfc-face--back" data-hfc-face="back" aria-hidden="true">
+      <div class="hfc-card-head"><span class="hfc-number">Q01</span><a class="hfc-priority hfc-priority--1" href="/learn-topic/?priority=1" title="筛选高频题" aria-label="筛选高频题">高频</a></div>
+      <div class="hfc-topics"><a class="hfc-topic" href="/learn-topic/?deck=%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C">#计算机网络</a><a class="hfc-topic" href="/learn-topic/?tag=HTTP">#HTTP</a><a class="hfc-topic" href="/learn-topic/?tag=GET">#GET</a><a class="hfc-topic" href="/learn-topic/?tag=POST">#POST</a><a class="hfc-topic" href="/learn-topic/?tag=PUT">#PUT</a><a class="hfc-topic" href="/learn-topic/?tag=PATCH">#PATCH</a></div>
+      <div class="hfc-back-question"><strong>问题:</strong><div class="hfc-back-question__content"><p>GET、POST、PUT、PATCH、DELETE 的核心边界是什么？</p>
+</div></div>
+      <div class="hfc-answer-section"><strong>回答：</strong><div><p>GET 获取，POST 提交处理或创建，PUT 以给定表示创建&#x2F;替换，PATCH 做部分修改，DELETE 删除目标当前关联；具体资源语义仍由 API 契约定义。</p>
+</div></div>
+      <div class="hfc-explanation-section"><strong>解析：</strong><div><p>方法表达的是对资源的意图，不是“有没有请求体”的语法开关：</p>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>常见语义</th>
+<th>幂等&#x2F;安全的典型边界</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td>获取表示</td>
+<td>通常安全且幂等</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td>创建或执行一次动作</td>
+<td>通常非幂等</td>
+</tr>
+<tr>
+<td><code>PUT</code></td>
+<td>用给定表示替换目标</td>
+<td>按契约通常幂等</td>
+</tr>
+<tr>
+<td><code>PATCH</code></td>
+<td>对目标做部分修改</td>
+<td>是否幂等取决于补丁语义</td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td>删除目标</td>
+<td>最终状态通常幂等，但响应和副作用仍由契约定义</td>
+</tr>
+</tbody></table>
+<p>不要把 <code>POST</code> 等同于“有请求体”、<code>PUT</code> 等同于“全量更新”；要结合资源模型、重复请求风险、状态码和应用 API 契约判断。</p>
+</div></div>
+      
+    </div>
+  </div>
+</article>
+<article class="hfc-flip hfc-inline" data-hfc-flip data-hfc-inline data-card-id="CN-HTTP-009" tabindex="0">
+
+  <div class="hfc-flip__inner" data-hfc-flip-inner>
+    <div class="hfc-face hfc-face--front" data-hfc-face="front">
+      <div class="hfc-card-head"><span class="hfc-number">Q02</span><a class="hfc-priority hfc-priority--1" href="/learn-topic/?priority=1" title="筛选高频题" aria-label="筛选高频题">高频</a></div>
+      <div class="hfc-topics"><a class="hfc-topic" href="/learn-topic/?deck=%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C">#计算机网络</a><a class="hfc-topic" href="/learn-topic/?tag=HTTP">#HTTP</a><a class="hfc-topic" href="/learn-topic/?tag=Cookie">#Cookie</a><a class="hfc-topic" href="/learn-topic/?tag=CORS">#CORS</a></div>
+      <div class="hfc-question"><p>Cookie、同源策略和 CORS 分别解决什么问题？</p>
+</div>
+      <span class="hfc-flip-hint">点击查看答案</span>
+    </div>
+    <div class="hfc-face hfc-face--back" data-hfc-face="back" aria-hidden="true">
+      <div class="hfc-card-head"><span class="hfc-number">Q02</span><a class="hfc-priority hfc-priority--1" href="/learn-topic/?priority=1" title="筛选高频题" aria-label="筛选高频题">高频</a></div>
+      <div class="hfc-topics"><a class="hfc-topic" href="/learn-topic/?deck=%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C">#计算机网络</a><a class="hfc-topic" href="/learn-topic/?tag=HTTP">#HTTP</a><a class="hfc-topic" href="/learn-topic/?tag=Cookie">#Cookie</a><a class="hfc-topic" href="/learn-topic/?tag=CORS">#CORS</a></div>
+      <div class="hfc-back-question"><strong>问题:</strong><div class="hfc-back-question__content"><p>Cookie、同源策略和 CORS 分别解决什么问题？</p>
+</div></div>
+      <div class="hfc-answer-section"><strong>回答：</strong><div><p>Cookie 管理 HTTP 状态，同源策略限制脚本跨源交互，CORS 让服务端声明哪些跨源浏览器上下文可被允许。</p>
+</div></div>
+      <div class="hfc-explanation-section"><strong>解析：</strong><div><p>Cookie 是浏览器按域名、路径和安全属性保存并发送的会话材料；同源策略 (SOP) 限制一个来源的脚本读取另一个来源的响应；CORS 是服务器通过响应头向浏览器声明“哪些跨源脚本可以读取”。CORS 不是认证，也不是所有客户端都自动遵守的防火墙。</p>
+<p>浏览器问题需要保留请求上下文：</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">Origin</span><span class="punctuation">: </span>https://app.example</span><br><span class="line"><span class="attribute">Access-Control-Request-Method</span><span class="punctuation">: </span>PUT</span><br><span class="line"><span class="attribute">Access-Control-Request-Headers</span><span class="punctuation">: </span>authorization</span><br></pre></td></tr></table></figure>
+<p>服务端的许可字段、浏览器的凭据模式和实际响应读取权限分别决定预检、发送和脚本可见性。<code>curl</code> 通常不会执行浏览器同源策略，因此 <code>curl</code> 成功不等于 Fetch 成功，也不等于 Cookie、代理或浏览器证书上下文一致。</p>
+</div></div>
+      
+    </div>
+  </div>
+</article>
+<article class="hfc-flip hfc-inline" data-hfc-flip data-hfc-inline data-card-id="CN-MOD-005" tabindex="0">
+
+  <div class="hfc-flip__inner" data-hfc-flip-inner>
+    <div class="hfc-face hfc-face--front" data-hfc-face="front">
+      <div class="hfc-card-head"><span class="hfc-number">Q03</span><a class="hfc-priority hfc-priority--1" href="/learn-topic/?priority=1" title="筛选高频题" aria-label="筛选高频题">高频</a></div>
+      <div class="hfc-topics"><a class="hfc-topic" href="/learn-topic/?deck=%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C">#计算机网络</a><a class="hfc-topic" href="/learn-topic/?tag=QUIC">#QUIC</a><a class="hfc-topic" href="/learn-topic/?tag=UDP">#UDP</a><a class="hfc-topic" href="/learn-topic/?tag=TLS%201.3">#TLS 1.3</a></div>
+      <div class="hfc-question"><p>QUIC 为什么不能简单理解为“没有连接的 UDP”？</p>
+</div>
+      <span class="hfc-flip-hint">点击查看答案</span>
+    </div>
+    <div class="hfc-face hfc-face--back" data-hfc-face="back" aria-hidden="true">
+      <div class="hfc-card-head"><span class="hfc-number">Q03</span><a class="hfc-priority hfc-priority--1" href="/learn-topic/?priority=1" title="筛选高频题" aria-label="筛选高频题">高频</a></div>
+      <div class="hfc-topics"><a class="hfc-topic" href="/learn-topic/?deck=%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C">#计算机网络</a><a class="hfc-topic" href="/learn-topic/?tag=QUIC">#QUIC</a><a class="hfc-topic" href="/learn-topic/?tag=UDP">#UDP</a><a class="hfc-topic" href="/learn-topic/?tag=TLS%201.3">#TLS 1.3</a></div>
+      <div class="hfc-back-question"><strong>问题:</strong><div class="hfc-back-question__content"><p>QUIC 为什么不能简单理解为“没有连接的 UDP”？</p>
+</div></div>
+      <div class="hfc-answer-section"><strong>回答：</strong><div><p>QUIC 在 UDP 上实现了连接 ID、确认、丢包恢复、拥塞控制、独立流和加密，并集成 TLS 1.3 握手。</p>
+</div></div>
+      <div class="hfc-explanation-section"><strong>解析：</strong><div><p>UDP 只提供无连接的数据报发送入口；QUIC 在这些数据报之上自己维护连接 ID、确认、丢包恢复、拥塞控制、独立 stream (逻辑数据流) 和 TLS 1.3 加密。HTTP&#x2F;3 再把 HTTP 语义映射到 QUIC，因此“使用 UDP”不等于没有连接、可靠性或安全状态。</p>
+<p>可以按职责看这一层关系：</p>
+<table>
+<thead>
+<tr>
+<th>层</th>
+<th>负责什么</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>UDP</td>
+<td>传送数据报，不保证顺序和重传</td>
+</tr>
+<tr>
+<td>QUIC</td>
+<td>连接状态、可靠传输、拥塞控制、并发 stream 和 TLS</td>
+</tr>
+<tr>
+<td>HTTP&#x2F;3</td>
+<td>方法、状态、字段等 HTTP 语义</td>
+</tr>
+</tbody></table>
+<p>QUIC 的连接状态由 QUIC 自己维护，而不是由 UDP 提供；所以不能因为抓到 UDP 包就把它当成普通、无状态的 UDP 应用。</p>
+</div></div>
+      
+    </div>
+  </div>
+</article>
+<article class="hfc-flip hfc-inline" data-hfc-flip data-hfc-inline data-card-id="CN-MOD-007" tabindex="0">
+
+  <div class="hfc-flip__inner" data-hfc-flip-inner>
+    <div class="hfc-face hfc-face--front" data-hfc-face="front">
+      <div class="hfc-card-head"><span class="hfc-number">Q04</span><a class="hfc-priority hfc-priority--1" href="/learn-topic/?priority=1" title="筛选高频题" aria-label="筛选高频题">高频</a></div>
+      <div class="hfc-topics"><a class="hfc-topic" href="/learn-topic/?deck=%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C">#计算机网络</a><a class="hfc-topic" href="/learn-topic/?tag=%E8%AF%81%E4%B9%A6">#证书</a><a class="hfc-topic" href="/learn-topic/?tag=SNI">#SNI</a><a class="hfc-topic" href="/learn-topic/?tag=ALPN">#ALPN</a></div>
+      <div class="hfc-question"><p>证书链、主机名校验、SNI 和 ALPN 各自解决什么问题？</p>
+</div>
+      <span class="hfc-flip-hint">点击查看答案</span>
+    </div>
+    <div class="hfc-face hfc-face--back" data-hfc-face="back" aria-hidden="true">
+      <div class="hfc-card-head"><span class="hfc-number">Q04</span><a class="hfc-priority hfc-priority--1" href="/learn-topic/?priority=1" title="筛选高频题" aria-label="筛选高频题">高频</a></div>
+      <div class="hfc-topics"><a class="hfc-topic" href="/learn-topic/?deck=%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C">#计算机网络</a><a class="hfc-topic" href="/learn-topic/?tag=%E8%AF%81%E4%B9%A6">#证书</a><a class="hfc-topic" href="/learn-topic/?tag=SNI">#SNI</a><a class="hfc-topic" href="/learn-topic/?tag=ALPN">#ALPN</a></div>
+      <div class="hfc-back-question"><strong>问题:</strong><div class="hfc-back-question__content"><p>证书链、主机名校验、SNI 和 ALPN 各自解决什么问题？</p>
+</div></div>
+      <div class="hfc-answer-section"><strong>回答：</strong><div><p>证书链验证信任路径，主机名校验证书是否属于目标，SNI 帮服务端选择虚拟主机，ALPN 协商应用协议版本&#x2F;协议。</p>
+</div></div>
+      <div class="hfc-explanation-section"><strong>解析：</strong><div><p>SNI 不等于信任，ALPN 不等于证书匹配；SAN、有效期、用途和客户端信任库仍需单独验证。</p>
+<p>一次 HTTPS 协商要把身份、协议和密钥分开核对：</p>
+<table>
+<thead>
+<tr>
+<th>观察项</th>
+<th>主要回答</th>
+<th>不是它负责的</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>证书链&#x2F;SAN</td>
+<td>服务端身份是否可信且匹配</td>
+<td>业务授权</td>
+</tr>
+<tr>
+<td>SNI</td>
+<td>服务端选择哪个虚拟主机</td>
+<td>信任本身</td>
+</tr>
+<tr>
+<td>ALPN</td>
+<td>选 h2、h3 等应用协议</td>
+<td>证书匹配</td>
+</tr>
+<tr>
+<td>TLS 密钥</td>
+<td>传输机密性和完整性</td>
+<td>HTTP 方法语义</td>
+</tr>
+</tbody></table>
+</div></div>
+      
+    </div>
+  </div>
+</article>
+<article class="hfc-flip hfc-inline" data-hfc-flip data-hfc-inline data-card-id="CN-DIAG-004" tabindex="0">
+
+  <div class="hfc-flip__inner" data-hfc-flip-inner>
+    <div class="hfc-face hfc-face--front" data-hfc-face="front">
+      <div class="hfc-card-head"><span class="hfc-number">Q05</span><a class="hfc-priority hfc-priority--1" href="/learn-topic/?priority=1" title="筛选高频题" aria-label="筛选高频题">高频</a></div>
+      <div class="hfc-topics"><a class="hfc-topic" href="/learn-topic/?deck=%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C">#计算机网络</a><a class="hfc-topic" href="/learn-topic/?tag=DNS">#DNS</a><a class="hfc-topic" href="/learn-topic/?tag=TCP">#TCP</a><a class="hfc-topic" href="/learn-topic/?tag=TLS">#TLS</a><a class="hfc-topic" href="/learn-topic/?tag=HTTP">#HTTP</a></div>
+      <div class="hfc-question"><p>如何区分 DNS 失败、TCP 拒绝、TLS 证书失败和 HTTP 502？</p>
+</div>
+      <span class="hfc-flip-hint">点击查看答案</span>
+    </div>
+    <div class="hfc-face hfc-face--back" data-hfc-face="back" aria-hidden="true">
+      <div class="hfc-card-head"><span class="hfc-number">Q05</span><a class="hfc-priority hfc-priority--1" href="/learn-topic/?priority=1" title="筛选高频题" aria-label="筛选高频题">高频</a></div>
+      <div class="hfc-topics"><a class="hfc-topic" href="/learn-topic/?deck=%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C">#计算机网络</a><a class="hfc-topic" href="/learn-topic/?tag=DNS">#DNS</a><a class="hfc-topic" href="/learn-topic/?tag=TCP">#TCP</a><a class="hfc-topic" href="/learn-topic/?tag=TLS">#TLS</a><a class="hfc-topic" href="/learn-topic/?tag=HTTP">#HTTP</a></div>
+      <div class="hfc-back-question"><strong>问题:</strong><div class="hfc-back-question__content"><p>如何区分 DNS 失败、TCP 拒绝、TLS 证书失败和 HTTP 502？</p>
+</div></div>
+      <div class="hfc-answer-section"><strong>回答：</strong><div><p>DNS 失败没有目标 IP，TCP 拒绝没有建立连接，TLS 失败通常 TCP 已建立但证书&#x2F;握手未通过，502 则说明某个 HTTP 网关已经返回响应。</p>
+</div></div>
+      <div class="hfc-explanation-section"><strong>解析：</strong><div><p>错误字符串可能随客户端变化，必须结合 DNS 查询、SYN&#x2F;RST、TLS 握手和响应头判断，不要把所有现象称为“网络不通”。</p>
+<p>可把错误放到一条时间线上：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">DNS → TCP → TLS → HTTP 网关 → 上游服务</span><br><span class="line">无 IP   RST/超时  证书/握手  502/504   应用结果</span><br></pre></td></tr></table></figure>
+<p>每个错误字符串都要回到对应报文、响应头或服务端日志；不要把缺少 HTTP 响应的失败写成 4xx&#x2F;5xx。</p>
+</div></div>
+      
+    </div>
+  </div>
+</article>
+
+<div class="note primary flat"><p>建议复习顺序是：先回答方法&#x2F;协议边界，再回答 TLS 与证书，最后把扩展协议放回 DNS、IP 和排障证据链。若无法解释 HTTP Upgrade、证书主机名或 UDP&#x2F;QUIC 的连接状态，就暂缓进入 WebSocket、DoH&#x2F;DoT 或 VXLAN 的实现细节。</p>
+</div>
+
+<h2 id="常见问题"><a href="#常见问题" class="headerlink" title="常见问题"></a>常见问题</h2>
+
+
+<article class="hfc-flip hfc-inline" data-hfc-flip data-hfc-inline data-card-id="CN-ADV-FAQ-001" tabindex="0">
+
+  <div class="hfc-flip__inner" data-hfc-flip-inner>
+    <div class="hfc-face hfc-face--front" data-hfc-face="front">
+      <div class="hfc-card-head"><span class="hfc-number">Q06</span><a class="hfc-priority hfc-priority--1" href="/learn-topic/?priority=1" title="筛选高频题" aria-label="筛选高频题">高频</a></div>
+      <div class="hfc-topics"><a class="hfc-topic" href="/learn-topic/?deck=%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C">#计算机网络</a><a class="hfc-topic" href="/learn-topic/?tag=WebSocket">#WebSocket</a><a class="hfc-topic" href="/learn-topic/?tag=HTTP%20Upgrade">#HTTP Upgrade</a></div>
+      <div class="hfc-question"><p>WebSocket 是不是“更快的 HTTP”？</p>
+</div>
+      <span class="hfc-flip-hint">点击查看答案</span>
+    </div>
+    <div class="hfc-face hfc-face--back" data-hfc-face="back" aria-hidden="true">
+      <div class="hfc-card-head"><span class="hfc-number">Q06</span><a class="hfc-priority hfc-priority--1" href="/learn-topic/?priority=1" title="筛选高频题" aria-label="筛选高频题">高频</a></div>
+      <div class="hfc-topics"><a class="hfc-topic" href="/learn-topic/?deck=%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C">#计算机网络</a><a class="hfc-topic" href="/learn-topic/?tag=WebSocket">#WebSocket</a><a class="hfc-topic" href="/learn-topic/?tag=HTTP%20Upgrade">#HTTP Upgrade</a></div>
+      <div class="hfc-back-question"><strong>问题:</strong><div class="hfc-back-question__content"><p>WebSocket 是不是“更快的 HTTP”？</p>
+</div></div>
+      <div class="hfc-answer-section"><strong>回答：</strong><div><p>不是。它通常先通过 HTTP Upgrade 建立入口，随后使用不同的帧和长连接语义。</p>
+</div></div>
+      <div class="hfc-explanation-section"><strong>解析：</strong><div><p>性能还取决于代理、心跳、消息大小、重连和服务端资源，不能只按协议名称比较快慢。</p>
+<p>WebSocket 的切换点可以用请求头观察：</p>
+<table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>看到什么</th>
+<th>语义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>建立入口</td>
+<td>HTTP Upgrade 请求&#x2F;响应</td>
+<td>从 HTTP 进入 WebSocket</td>
+</tr>
+<tr>
+<td>建立后</td>
+<td>WebSocket 帧和长连接</td>
+<td>不再按普通 HTTP 请求&#x2F;响应逐次交互</td>
+</tr>
+</tbody></table>
+<p>因此“更快的 HTTP”既混淆了协议边界，也忽略了心跳、重连和代理资源。</p>
+</div></div>
+      
+    </div>
+  </div>
+</article>
+
+<article class="hfc-flip hfc-inline" data-hfc-flip data-hfc-inline data-card-id="CN-ADV-FAQ-002" tabindex="0">
+
+  <div class="hfc-flip__inner" data-hfc-flip-inner>
+    <div class="hfc-face hfc-face--front" data-hfc-face="front">
+      <div class="hfc-card-head"><span class="hfc-number">Q07</span><a class="hfc-priority hfc-priority--2" href="/learn-topic/?priority=2" title="筛选中频题" aria-label="筛选中频题">中频</a></div>
+      <div class="hfc-topics"><a class="hfc-topic" href="/learn-topic/?deck=%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C">#计算机网络</a><a class="hfc-topic" href="/learn-topic/?tag=DoH">#DoH</a><a class="hfc-topic" href="/learn-topic/?tag=DoT">#DoT</a><a class="hfc-topic" href="/learn-topic/?tag=DNS">#DNS</a></div>
+      <div class="hfc-question"><p>DoH 比 DoT 更安全吗？</p>
+</div>
+      <span class="hfc-flip-hint">点击查看答案</span>
+    </div>
+    <div class="hfc-face hfc-face--back" data-hfc-face="back" aria-hidden="true">
+      <div class="hfc-card-head"><span class="hfc-number">Q07</span><a class="hfc-priority hfc-priority--2" href="/learn-topic/?priority=2" title="筛选中频题" aria-label="筛选中频题">中频</a></div>
+      <div class="hfc-topics"><a class="hfc-topic" href="/learn-topic/?deck=%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C">#计算机网络</a><a class="hfc-topic" href="/learn-topic/?tag=DoH">#DoH</a><a class="hfc-topic" href="/learn-topic/?tag=DoT">#DoT</a><a class="hfc-topic" href="/learn-topic/?tag=DNS">#DNS</a></div>
+      <div class="hfc-back-question"><strong>问题:</strong><div class="hfc-back-question__content"><p>DoH 比 DoT 更安全吗？</p>
+</div></div>
+      <div class="hfc-answer-section"><strong>回答：</strong><div><p>不能脱离威胁模型比较。二者都可以保护客户端到解析器的查询传输，但信任、日志、端点策略、治理和回退行为决定实际风险。</p>
+</div></div>
+      <div class="hfc-explanation-section"><strong>解析：</strong><div><p>DoH 更像 HTTPS，DoT 的专用端口更容易被识别和治理；加密查询不等于匿名化所有访问。</p>
+<p>两者都保护客户端到解析器的查询传输，但治理形态不同：</p>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>外观</th>
+<th>需要额外核对</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>DoH</td>
+<td>HTTPS 流量</td>
+<td>端点、代理、日志和回退</td>
+</tr>
+<tr>
+<td>DoT</td>
+<td>专用 TLS 端口</td>
+<td>端口策略、识别和端点</td>
+</tr>
+</tbody></table>
+<p>加密查询不等于匿名化访问，也不自动改变解析器的信任与留存策略。</p>
+</div></div>
+      
+    </div>
+  </div>
+</article>
+
+<article class="hfc-flip hfc-inline" data-hfc-flip data-hfc-inline data-card-id="CN-ADV-FAQ-003" tabindex="0">
+
+  <div class="hfc-flip__inner" data-hfc-flip-inner>
+    <div class="hfc-face hfc-face--front" data-hfc-face="front">
+      <div class="hfc-card-head"><span class="hfc-number">Q08</span><a class="hfc-priority hfc-priority--1" href="/learn-topic/?priority=1" title="筛选高频题" aria-label="筛选高频题">高频</a></div>
+      <div class="hfc-topics"><a class="hfc-topic" href="/learn-topic/?deck=%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C">#计算机网络</a><a class="hfc-topic" href="/learn-topic/?tag=IPsec">#IPsec</a><a class="hfc-topic" href="/learn-topic/?tag=HTTPS">#HTTPS</a><a class="hfc-topic" href="/learn-topic/?tag=%E5%AE%89%E5%85%A8%E8%BE%B9%E7%95%8C">#安全边界</a></div>
+      <div class="hfc-question"><p>IPsec 和 HTTPS 需要同时使用吗？</p>
+</div>
+      <span class="hfc-flip-hint">点击查看答案</span>
+    </div>
+    <div class="hfc-face hfc-face--back" data-hfc-face="back" aria-hidden="true">
+      <div class="hfc-card-head"><span class="hfc-number">Q08</span><a class="hfc-priority hfc-priority--1" href="/learn-topic/?priority=1" title="筛选高频题" aria-label="筛选高频题">高频</a></div>
+      <div class="hfc-topics"><a class="hfc-topic" href="/learn-topic/?deck=%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C">#计算机网络</a><a class="hfc-topic" href="/learn-topic/?tag=IPsec">#IPsec</a><a class="hfc-topic" href="/learn-topic/?tag=HTTPS">#HTTPS</a><a class="hfc-topic" href="/learn-topic/?tag=%E5%AE%89%E5%85%A8%E8%BE%B9%E7%95%8C">#安全边界</a></div>
+      <div class="hfc-back-question"><strong>问题:</strong><div class="hfc-back-question__content"><p>IPsec 和 HTTPS 需要同时使用吗？</p>
+</div></div>
+      <div class="hfc-answer-section"><strong>回答：</strong><div><p>它们保护的边界不同，是否叠加取决于网络拓扑和威胁模型。IPsec 可以保护网络路径，HTTPS 保护应用连接。</p>
+</div></div>
+      <div class="hfc-explanation-section"><strong>解析：</strong><div><p>IPsec 隧道建立也不替代 HTTP 认证与授权；“链路加密”与“应用身份”不是同一个结论。</p>
+<p>先标出保护边界：</p>
+<table>
+<thead>
+<tr>
+<th>技术</th>
+<th>主要保护</th>
+<th>仍需单独验证</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>IPsec</td>
+<td>网络路径&#x2F;隧道</td>
+<td>应用认证与授权</td>
+</tr>
+<tr>
+<td>HTTPS</td>
+<td>应用连接到 TLS 终止点</td>
+<td>终止点之后的内部链路</td>
+</tr>
+</tbody></table>
+<p>是否叠加取决于拓扑和威胁模型，不是“加密越多越安全”的抽象竞赛。</p>
+</div></div>
+      
+    </div>
+  </div>
+</article>
+
+<article class="hfc-flip hfc-inline" data-hfc-flip data-hfc-inline data-card-id="CN-ADV-FAQ-004" tabindex="0">
+
+  <div class="hfc-flip__inner" data-hfc-flip-inner>
+    <div class="hfc-face hfc-face--front" data-hfc-face="front">
+      <div class="hfc-card-head"><span class="hfc-number">Q09</span><a class="hfc-priority hfc-priority--2" href="/learn-topic/?priority=2" title="筛选中频题" aria-label="筛选中频题">中频</a></div>
+      <div class="hfc-topics"><a class="hfc-topic" href="/learn-topic/?deck=%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C">#计算机网络</a><a class="hfc-topic" href="/learn-topic/?tag=VXLAN">#VXLAN</a><a class="hfc-topic" href="/learn-topic/?tag=VTEP">#VTEP</a><a class="hfc-topic" href="/learn-topic/?tag=MTU">#MTU</a></div>
+      <div class="hfc-question"><p>VXLAN 能解决所有 VLAN 扩展问题吗？</p>
+</div>
+      <span class="hfc-flip-hint">点击查看答案</span>
+    </div>
+    <div class="hfc-face hfc-face--back" data-hfc-face="back" aria-hidden="true">
+      <div class="hfc-card-head"><span class="hfc-number">Q09</span><a class="hfc-priority hfc-priority--2" href="/learn-topic/?priority=2" title="筛选中频题" aria-label="筛选中频题">中频</a></div>
+      <div class="hfc-topics"><a class="hfc-topic" href="/learn-topic/?deck=%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C">#计算机网络</a><a class="hfc-topic" href="/learn-topic/?tag=VXLAN">#VXLAN</a><a class="hfc-topic" href="/learn-topic/?tag=VTEP">#VTEP</a><a class="hfc-topic" href="/learn-topic/?tag=MTU">#MTU</a></div>
+      <div class="hfc-back-question"><strong>问题:</strong><div class="hfc-back-question__content"><p>VXLAN 能解决所有 VLAN 扩展问题吗？</p>
+</div></div>
+      <div class="hfc-answer-section"><strong>回答：</strong><div><p>不能。它增加覆盖封装和规模化隔离能力，但引入 VTEP、MTU、控制面、泛洪和 underlay 可达性问题。</p>
+</div></div>
+      <div class="hfc-explanation-section"><strong>解析：</strong><div><p>是否采用应由租户数量、故障域、控制面和运维能力决定，而不是只看 VNI 的数量空间。</p>
+<p>VXLAN 扩展的是覆盖网络的隔离和规模，不会删除底层约束：</p>
+<table>
+<thead>
+<tr>
+<th>新增能力</th>
+<th>新增边界</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>VNI</td>
+<td>更大的租户标识空间</td>
+</tr>
+<tr>
+<td>VTEP</td>
+<td>封装&#x2F;解封装与可达性</td>
+</tr>
+<tr>
+<td>Overlay</td>
+<td>需要额外 MTU、控制面和泛洪治理</td>
+</tr>
+</tbody></table>
+</div></div>
+      
+    </div>
+  </div>
+</article>
+
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><div class="link-group"><div class="tag link"><a class="link-card" title="RFC 6455：The WebSocket Protocol" target="_blank" rel="noopener" href="https://www.rfc-editor.org/rfc/rfc6455.html"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://www.rfc-editor.org/favicon.ico"/></div><div class="right"><p class="text">RFC 6455：The WebSocket Protocol</p><p class="url">https://www.rfc-editor.org/rfc/rfc6455.html</p></div></a></div>
+<div class="tag link"><a class="link-card" title="RFC 8484：DNS Queries over HTTPS" target="_blank" rel="noopener" href="https://www.rfc-editor.org/rfc/rfc8484.html"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://www.rfc-editor.org/favicon.ico"/></div><div class="right"><p class="text">RFC 8484：DNS Queries over HTTPS</p><p class="url">https://www.rfc-editor.org/rfc/rfc8484.html</p></div></a></div>
+<div class="tag link"><a class="link-card" title="RFC 7858：Specification for DNS over TLS" target="_blank" rel="noopener" href="https://www.rfc-editor.org/rfc/rfc7858.html"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://www.rfc-editor.org/favicon.ico"/></div><div class="right"><p class="text">RFC 7858：Specification for DNS over TLS</p><p class="url">https://www.rfc-editor.org/rfc/rfc7858.html</p></div></a></div>
+<div class="tag link"><a class="link-card" title="RFC 4301：Security Architecture for IP" target="_blank" rel="noopener" href="https://www.rfc-editor.org/rfc/rfc4301.html"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://www.rfc-editor.org/favicon.ico"/></div><div class="right"><p class="text">RFC 4301：Security Architecture for IP</p><p class="url">https://www.rfc-editor.org/rfc/rfc4301.html</p></div></a></div>
+<div class="tag link"><a class="link-card" title="RFC 7348：Virtual eXtensible Local Area Network" target="_blank" rel="noopener" href="https://www.rfc-editor.org/rfc/rfc7348.html"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://www.rfc-editor.org/favicon.ico"/></div><div class="right"><p class="text">RFC 7348：Virtual eXtensible Local Area Network</p><p class="url">https://www.rfc-editor.org/rfc/rfc7348.html</p></div></a></div>
+<div class="tag link"><a class="link-card" title="RFC 2474：Differentiated Services Field" target="_blank" rel="noopener" href="https://www.rfc-editor.org/rfc/rfc2474.html"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://www.rfc-editor.org/favicon.ico"/></div><div class="right"><p class="text">RFC 2474：Differentiated Services Field</p><p class="url">https://www.rfc-editor.org/rfc/rfc2474.html</p></div></a></div>
+<div class="tag link"><a class="link-card" title="RFC 1112：IP Multicast Extensions" target="_blank" rel="noopener" href="https://www.rfc-editor.org/rfc/rfc1112.html"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://www.rfc-editor.org/favicon.ico"/></div><div class="right"><p class="text">RFC 1112：IP Multicast Extensions</p><p class="url">https://www.rfc-editor.org/rfc/rfc1112.html</p></div></a></div>
+<div class="tag link"><a class="link-card" title="RFC 2328：OSPF Version 2" target="_blank" rel="noopener" href="https://www.rfc-editor.org/rfc/rfc2328.html"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://www.rfc-editor.org/favicon.ico"/></div><div class="right"><p class="text">RFC 2328：OSPF Version 2</p><p class="url">https://www.rfc-editor.org/rfc/rfc2328.html</p></div></a></div>
+<div class="tag link"><a class="link-card" title="RFC 4271：BGP-4" target="_blank" rel="noopener" href="https://www.rfc-editor.org/rfc/rfc4271.html"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://www.rfc-editor.org/favicon.ico"/></div><div class="right"><p class="text">RFC 4271：BGP-4</p><p class="url">https://www.rfc-editor.org/rfc/rfc4271.html</p></div></a></div>
+<div class="tag link"><a class="link-card" title="RFC 4918：WebDAV" target="_blank" rel="noopener" href="https://www.rfc-editor.org/rfc/rfc4918.html"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://www.rfc-editor.org/favicon.ico"/></div><div class="right"><p class="text">RFC 4918：WebDAV</p><p class="url">https://www.rfc-editor.org/rfc/rfc4918.html</p></div></a></div>
+<div class="tag link"><a class="link-card" title="IANA HTTP Status Code Registry" target="_blank" rel="noopener" href="https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://www.iana.org/favicon.ico"/></div><div class="right"><p class="text">IANA HTTP Status Code Registry</p><p class="url">https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml</p></div></a></div></div>
+
+<div class="hfc-article-cta" data-hfc-article-cta data-hfc-article-count="9"><a class="hfc-button hfc-button--primary" href="/learn-topic/?article=_posts%2Flearn-topic%2Fcomputer-network%2F%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C(%E5%85%AB)%E8%BF%9B%E9%98%B6%E8%B7%AF%E7%BA%BF.md" title="复习本篇 · 9 张卡片" aria-label="复习本篇 · 9 张卡片"><i class="fas fa-graduation-cap hfc-review-icon" aria-hidden="true"></i><span class="hfc-review-label">复习</span><span class="hfc-review-detail">本篇 · 9 张卡片</span></a></div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://koco-co.github.io">𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://koco-co.github.io/posts/e470b049/">https://koco-co.github.io/posts/e470b049/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://koco-co.github.io" target="_blank">𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮'𝓼 𝓦𝓸𝓻𝓴𝓢𝓹𝓪𝓬𝓮</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/">计算机网络</a><a class="post-meta__tags" href="/tags/WebSocket/">WebSocket</a><a class="post-meta__tags" href="/tags/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/">网络安全</a></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞助</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechat.jpeg" target="_blank"><img class="post-qr-code-img" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/wechat.jpeg"/></a><div class="post-qr-code-desc"></div></li><li class="reward-item"><a href="/img/alipay.jpeg" target="_blank"><img class="post-qr-code-img" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/alipay.jpeg"/></a><div class="post-qr-code-desc"></div></li></ul></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/e25e16df/" title="计算机网络(九)综合实战"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/computer-network-course-cover.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">计算机网络(九)综合实战</div></div><div class="info-2"><div class="info-item-1">用两条完整访问链路和可控失败场景整合 DNS、TCP、TLS、HTTP、QUIC、HTTP/3 与状态码证据，完成面试式网络分析。</div></div></div></a><a class="pagination-related" href="/posts/61ba71fc/" title="计算机网络(七)抓包与网络排障"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/computer-network-course-cover.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">计算机网络(七)抓包与网络排障</div></div><div class="info-2"><div class="info-item-1">把 DevTools、curl、tcpdump/Wireshark 和六个安全可回收场景串成 DNS、TCP、TLS、HTTP 的证据链排障方法。</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/347ce4f2/" title="计算机网络(一)入门路线"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/computer-network-course-cover.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-03-01</div><div class="info-item-2">计算机网络(一)入门路线</div></div><div class="info-2"><div class="info-item-1">建立计算机网络的学习坐标、依赖顺序、资料边界和复习方式，为后续分层、寻址、传输、HTTP 与排障文章提供统一入口。</div></div></div></a><a class="pagination-related" href="/posts/4504d456/" title="Playwright(十一)进阶路线"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/playwright-course-cover.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-04-17</div><div class="info-item-2">Playwright(十一)进阶路线</div></div><div class="info-2"><div class="info-item-1">按需学习 Shadow DOM、时间控制、GraphQL、WebSocket、BDD、无障碍与视觉回归，将低频或专项能力集中在主线之外并明确各自适用边界。</div></div></div></a><a class="pagination-related" href="/posts/61ba71fc/" title="计算机网络(七)抓包与网络排障"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/computer-network-course-cover.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-03-07</div><div class="info-item-2">计算机网络(七)抓包与网络排障</div></div><div class="info-2"><div class="info-item-1">把 DevTools、curl、tcpdump/Wireshark 和六个安全可回收场景串成 DNS、TCP、TLS、HTTP 的证据链排障方法。</div></div></div></a><a class="pagination-related" href="/posts/e25e16df/" title="计算机网络(九)综合实战"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/computer-network-course-cover.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-03-09</div><div class="info-item-2">计算机网络(九)综合实战</div></div><div class="info-2"><div class="info-item-1">用两条完整访问链路和可控失败场景整合 DNS、TCP、TLS、HTTP、QUIC、HTTP/3 与状态码证据，完成面试式网络分析。</div></div></div></a><a class="pagination-related" href="/posts/5bd659bc/" title="计算机网络(三)IP 与网络寻址"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/computer-network-course-cover.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-03-03</div><div class="info-item-2">计算机网络(三)IP 与网络寻址</div></div><div class="info-2"><div class="info-item-1">从一条跨网段访问链路出发，掌握 IPv4/IPv6 地址、CIDR、最长前缀匹配、NAT、ICMP、DHCP、DNS 与旧笔记迁移边界。</div></div></div></a><a class="pagination-related" href="/posts/366484e7/" title="计算机网络(五)HTTP 协议"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/computer-network-course-cover.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-03-05</div><div class="info-item-2">计算机网络(五)HTTP 协议</div></div><div class="info-2"><div class="info-item-1">从资源、表示、消息和字段出发，系统掌握 HTTP 方法、状态码、缓存、Cookie、CORS、代理与面试分析证据。</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/sisyphus-vale-avatar.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮</div><div class="author-info-description">身如柳絮随风扬 无论云泥意贯一</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">232</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">157</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">23</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/koco-co"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons"><a class="social-icon" href="mailto:kopohub@gmail.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a><a class="social-icon" href="https://v.douyin.com/uk6DHVS-OrI" target="_blank" title="TikTok"><i class="fab fa-tiktok"></i></a><a class="social-icon" href="https://space.bilibili.com/3546823172033014" target="_blank" title="Bilibili"><i class="fas fa-tv"></i></a><a class="social-icon" href="https://x.com/SugerQvQ" target="_blank" title="X"><i class="fab fa-x-twitter"></i></a><a class="social-icon" href="https://steamcommunity.com/profiles/76561199483116375/" target="_blank" title="Steam"><i class="fab fa-steam"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">欢迎来到 Sisyphus Vale。这里记录技术实践、系统学习与日常思考。</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%89%A9%E5%B1%95%E5%8D%8F%E8%AE%AE%E5%9C%B0%E5%9B%BE"><span class="toc-number">1.</span> <span class="toc-text">扩展协议地图</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%88%E5%AE%9A%E4%BD%8D%E2%80%9C%E6%94%B9%E5%8F%98%E4%BA%86%E5%93%AA%E4%B8%80%E5%B1%82%E2%80%9D"><span class="toc-number">1.1.</span> <span class="toc-text">先定位“改变了哪一层”</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BA%94%E7%94%A8%E5%8D%8F%E8%AE%AE"><span class="toc-number">2.</span> <span class="toc-text">应用协议</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#WebSocket-%E7%9A%84%E5%8D%87%E7%BA%A7%E8%BE%B9%E7%95%8C"><span class="toc-number">2.1.</span> <span class="toc-text">WebSocket 的升级边界</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#DoH-%E4%B8%8E-DoT-%E7%9A%84%E5%8F%96%E8%88%8D"><span class="toc-number">2.2.</span> <span class="toc-text">DoH 与 DoT 的取舍</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%90%8D%E7%A7%B0%E8%A7%A3%E6%9E%90%E5%92%8C%E8%BF%9E%E6%8E%A5%E8%AF%81%E6%8D%AE"><span class="toc-number">2.3.</span> <span class="toc-text">名称解析和连接证据</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8%E4%B8%8E%E8%A6%86%E7%9B%96"><span class="toc-number">3.</span> <span class="toc-text">网络安全与覆盖</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#IPsec-%E7%9A%84%E5%AE%89%E5%85%A8%E6%A8%A1%E5%9E%8B"><span class="toc-number">3.1.</span> <span class="toc-text">IPsec 的安全模型</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#VXLAN-%E9%9A%A7%E9%81%93"><span class="toc-number">3.2.</span> <span class="toc-text">VXLAN 隧道</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BD%91%E7%BB%9C%E6%B2%BB%E7%90%86%E4%B8%8E%E5%8D%8F%E8%AE%AE%E6%89%A9%E5%B1%95"><span class="toc-number">4.</span> <span class="toc-text">网络治理与协议扩展</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#DSCP-%E4%B8%8E-QoS"><span class="toc-number">4.1.</span> <span class="toc-text">DSCP 与 QoS</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#IPv4-%E7%BB%84%E6%92%AD"><span class="toc-number">4.2.</span> <span class="toc-text">IPv4 组播</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#OSPF-%E4%B8%8E-BGP"><span class="toc-number">4.3.</span> <span class="toc-text">OSPF 与 BGP</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#WebDAV-%E4%B8%8E-102"><span class="toc-number">4.4.</span> <span class="toc-text">WebDAV 与 102</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%89%A9%E5%B1%95%E4%B8%BB%E9%A2%98%E7%9A%84%E8%BE%B9%E7%95%8C"><span class="toc-number">4.5.</span> <span class="toc-text">扩展主题的边界</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%80%89%E6%8B%A9%E8%BF%9B%E9%98%B6%E4%B8%BB%E9%A2%98"><span class="toc-number">5.</span> <span class="toc-text">选择进阶主题</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%9B%E5%85%A5%E6%9D%A1%E4%BB%B6"><span class="toc-number">5.1.</span> <span class="toc-text">进入条件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%8D%E4%B9%A0%E5%8D%A1%E7%89%87"><span class="toc-number">5.2.</span> <span class="toc-text">复习卡片</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98"><span class="toc-number">6.</span> <span class="toc-text">常见问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-number">7.</span> <span class="toc-text">参考资料</span></a></li></ol></div></div><div class="card-widget card-post-series"><div class="item-headline"><i class="fa-solid fa-layer-group"></i><span>系列文章</span></div><div class="aside-list"><div class="aside-list-item"><div class="content"><a class="title" href="/posts/e25e16df/" title="计算机网络(九)综合实战">计算机网络(九)综合实战</a><time datetime="2026-03-08T16:00:00.000Z" title="发表于 2026-03-09 00:00:00">2026-03-09</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/e470b049/" title="计算机网络(八)进阶路线">计算机网络(八)进阶路线</a><time datetime="2026-03-07T16:00:00.000Z" title="发表于 2026-03-08 00:00:00">2026-03-08</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/61ba71fc/" title="计算机网络(七)抓包与网络排障">计算机网络(七)抓包与网络排障</a><time datetime="2026-03-06T16:00:00.000Z" title="发表于 2026-03-07 00:00:00">2026-03-07</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/36cb963b/" title="计算机网络(六)HTTPS 与现代 HTTP">计算机网络(六)HTTPS 与现代 HTTP</a><time datetime="2026-03-05T16:00:00.000Z" title="发表于 2026-03-06 00:00:00">2026-03-06</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/366484e7/" title="计算机网络(五)HTTP 协议">计算机网络(五)HTTP 协议</a><time datetime="2026-03-04T16:00:00.000Z" title="发表于 2026-03-05 00:00:00">2026-03-05</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/ec8f5dd0/" title="计算机网络(四)UDP 与 TCP">计算机网络(四)UDP 与 TCP</a><time datetime="2026-03-03T16:00:00.000Z" title="发表于 2026-03-04 00:00:00">2026-03-04</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/5bd659bc/" title="计算机网络(三)IP 与网络寻址">计算机网络(三)IP 与网络寻址</a><time datetime="2026-03-02T16:00:00.000Z" title="发表于 2026-03-03 00:00:00">2026-03-03</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/474f4d81/" title="计算机网络(二)网络分层与局域网">计算机网络(二)网络分层与局域网</a><time datetime="2026-03-01T16:00:00.000Z" title="发表于 2026-03-02 00:00:00">2026-03-02</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/347ce4f2/" title="计算机网络(一)入门路线">计算机网络(一)入门路线</a><time datetime="2026-02-28T16:00:00.000Z" title="发表于 2026-03-01 00:00:00">2026-03-01</time></div></div></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/posts/df8a8a9e/" title="AI 编程工作流插件选型指南"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/%E6%96%87%E7%AB%A0%E9%9A%8F%E6%9C%BA%E5%B0%81%E9%9D%A203.webp" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="AI 编程工作流插件选型指南"/></a><div class="content"><a class="title" href="/posts/df8a8a9e/" title="AI 编程工作流插件选型指南">AI 编程工作流插件选型指南</a><time datetime="2026-08-27T08:24:15.000Z" title="发表于 2026-08-27 16:24:15">2026-08-27</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/posts/18a17ffa/" title="AI 辅助测试(十二)项目实战"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/ai-assisted-testing-course-cover.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="AI 辅助测试(十二)项目实战"/></a><div class="content"><a class="title" href="/posts/18a17ffa/" title="AI 辅助测试(十二)项目实战">AI 辅助测试(十二)项目实战</a><time datetime="2026-08-20T04:00:00.000Z" title="发表于 2026-08-20 12:00:00">2026-08-20</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/posts/f5e80d23/" title="AI 辅助测试(十一)CI流水线"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/ai-assisted-testing-course-cover.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="AI 辅助测试(十一)CI流水线"/></a><div class="content"><a class="title" href="/posts/f5e80d23/" title="AI 辅助测试(十一)CI流水线">AI 辅助测试(十一)CI流水线</a><time datetime="2026-08-19T16:00:00.000Z" title="发表于 2026-08-20 00:00:00">2026-08-20</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/posts/ca1f50ce/" title="AI 辅助测试(十)测试资产验收"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/ai-assisted-testing-course-cover.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="AI 辅助测试(十)测试资产验收"/></a><div class="content"><a class="title" href="/posts/ca1f50ce/" title="AI 辅助测试(十)测试资产验收">AI 辅助测试(十)测试资产验收</a><time datetime="2026-08-19T04:00:00.000Z" title="发表于 2026-08-19 12:00:00">2026-08-19</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/posts/6c305e52/" title="AI 辅助测试(九)缺陷分析与维护"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/ai-assisted-testing-course-cover.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="AI 辅助测试(九)缺陷分析与维护"/></a><div class="content"><a class="title" href="/posts/6c305e52/" title="AI 辅助测试(九)缺陷分析与维护">AI 辅助测试(九)缺陷分析与维护</a><time datetime="2026-08-18T16:00:00.000Z" title="发表于 2026-08-19 00:00:00">2026-08-19</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By 𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮</span></div><div class="footer_custom_text"><p>本站内容仅供学习与研究使用。部分资料来自互联网，如有侵权或不妥，请联系处理。</p>
+<p><a target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> · <a target="_blank" rel="noopener" href="https://butterfly.js.org/">Butterfly</a> · <a target="_blank" rel="noopener" href="https://github.com/koco-co/hexo-blog">站点源码</a> · <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a></p></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.7.0"></script><script src="/js/main.js?v=5.7.0"></script><script src="/js/tw_cn.js?v=5.7.0"></script><script src="/vendor/butterfly/lazyload/lazyload.iife.min.js"></script><div class="js-pjax"><script>(() => {
+  const parseViewBox = viewBox => {
+    if (!viewBox) return null
+    const parts = viewBox.trim().split(/[\s,]+/).map(n => Number(n))
+    if (parts.length !== 4 || parts.some(n => Number.isNaN(n))) return null
+    return parts
+  }
+
+  const getSvgViewBox = svg => {
+    const attr = parseViewBox(svg.getAttribute('viewBox'))
+    if (attr) return attr
+
+    // Fallback: use bbox to build a viewBox
+    try {
+      const bbox = svg.getBBox()
+      if (bbox && bbox.width && bbox.height) return [bbox.x, bbox.y, bbox.width, bbox.height]
+    } catch (e) {
+      // getBBox may fail on some edge cases; ignore
+    }
+
+    const w = Number(svg.getAttribute('width')) || 0
+    const h = Number(svg.getAttribute('height')) || 0
+    if (w > 0 && h > 0) return [0, 0, w, h]
+    return [0, 0, 100, 100]
+  }
+
+  const setSvgViewBox = (svg, vb) => {
+    svg.setAttribute('viewBox', `${vb[0]} ${vb[1]} ${vb[2]} ${vb[3]}`)
+  }
+
+  const clamp = (v, min, max) => Math.max(min, Math.min(max, v))
+
+  const openSvgInNewTab = ({ source, initViewBox }) => {
+    const getClonedSvg = () => {
+      if (typeof source === 'string') {
+        const template = document.createElement('template')
+        template.innerHTML = source.trim()
+        const svg = template.content.querySelector('svg')
+        return svg ? svg.cloneNode(true) : null
+      }
+      if (source && typeof source.cloneNode === 'function') {
+        return source.cloneNode(true)
+      }
+      return null
+    }
+
+    const clone = getClonedSvg()
+    if (!clone) return
+    if (initViewBox && initViewBox.length === 4) {
+      clone.setAttribute('viewBox', initViewBox.join(' '))
+    }
+    if (!clone.getAttribute('xmlns')) clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+    if (!clone.getAttribute('xmlns:xlink') && clone.innerHTML.includes('xlink:')) {
+      clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink')
+    }
+    // inject background to match current theme
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
+    const bg = getComputedStyle(document.body).backgroundColor || (isDark ? '#1e1e1e' : '#ffffff')
+    if (!clone.style.background) clone.style.background = bg
+
+    const serializer = new XMLSerializer()
+    const svgSource = serializer.serializeToString(clone)
+    const htmlSource = `<!doctype html><html><head><meta charset="utf-8" />
+      <style>
+        html, body { width: 100%; height: 100%; margin: 0; display: flex; align-items: center; justify-content: center; background: ${bg}; }
+        svg { max-width: 100%; max-height: 100%; height: auto; width: auto; }
+      </style>
+      </head><body>${svgSource}</body></html>`
+    const blob = new Blob([htmlSource], { type: 'text/html;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    window.open(url, '_blank', 'noopener')
+
+    setTimeout(() => URL.revokeObjectURL(url), 5000)
+  }
+
+  const attachMermaidViewerButton = wrap => {
+    let btn = wrap.querySelector('.mermaid-open-btn')
+    if (!btn) {
+      btn = document.createElement('button')
+      btn.type = 'button'
+      btn.className = 'mermaid-open-btn'
+      wrap.appendChild(btn)
+    }
+
+    btn.innerHTML = '<i class="fa fa-search fa-fw" aria-hidden="true"></i>'
+
+    if (!btn.__mermaidViewerBound) {
+      btn.addEventListener('click', e => {
+        e.preventDefault()
+        e.stopPropagation()
+        const svg = wrap.__mermaidOriginalSvg || wrap.querySelector('svg')
+        if (!svg) return
+        const initViewBox = wrap.__mermaidInitViewBox
+        openSvgInNewTab({ source: svg, initViewBox })
+      })
+      btn.__mermaidViewerBound = true
+    }
+  }
+
+  // Zoom around a point (px, py) in the SVG viewport (in viewBox coordinates)
+  const zoomAtPoint = (vb, factor, px, py) => {
+    const w = vb[2] * factor
+    const h = vb[3] * factor
+    const nx = px - (px - vb[0]) * factor
+    const ny = py - (py - vb[1]) * factor
+    return [nx, ny, w, h]
+  }
+
+  const initMermaidGestures = wrap => {
+    // Clean up previous event listeners and pending frames
+    if (wrap.__mermaidAbortController) {
+      wrap.__mermaidAbortController.abort()
+      if (wrap.__mermaidRafId) cancelAnimationFrame(wrap.__mermaidRafId)
+    }
+    const ac = new AbortController()
+    wrap.__mermaidAbortController = ac
+    const svg = wrap.querySelector('svg')
+    if (!svg) return
+
+    // Ensure viewBox exists so gestures always work
+    const initVb = getSvgViewBox(svg)
+    wrap.__mermaidInitViewBox = initVb
+    wrap.__mermaidCurViewBox = initVb.slice()
+    setSvgViewBox(svg, initVb)
+    // Disable default gestures to prevent scroll chaining and pinch-zoom penetration in Chrome
+    svg.style.touchAction = 'none'
+
+    // Cache BoundingClientRect, throttled on scroll to reduce reflow
+    let cachedRect = svg.getBoundingClientRect()
+    let rectDirty = false
+    const markRectDirty = () => { rectDirty = true }
+    window.addEventListener('resize', markRectDirty, { signal: ac.signal })
+    window.addEventListener('scroll', markRectDirty, { signal: ac.signal, capture: true })
+    const getRect = () => {
+      if (rectDirty) {
+        cachedRect = svg.getBoundingClientRect()
+        rectDirty = false
+      }
+      return cachedRect
+    }
+
+    // Precompute clamp bounds from initial viewBox
+    const minW = initVb[2] * 0.1
+    const maxW = initVb[2] * 10
+    const minH = initVb[3] * 0.1
+    const maxH = initVb[3] * 10
+    const clampVb = vb => {
+      const out = vb.slice()
+      out[2] = clamp(out[2], minW, maxW)
+      out[3] = clamp(out[3], minH, maxH)
+      return out
+    }
+
+    // Throttle DOM updates using requestAnimationFrame
+    let pendingVb = null
+    let rafId = null
+    const applyVb = () => {
+      if (pendingVb) {
+        wrap.__mermaidCurViewBox = pendingVb
+        setSvgViewBox(svg, pendingVb)
+        pendingVb = null
+      }
+      rafId = null
+      wrap.__mermaidRafId = null
+    }
+    const setCurVb = vb => {
+      pendingVb = clampVb(vb)
+      if (!rafId) {
+        rafId = requestAnimationFrame(applyVb)
+        wrap.__mermaidRafId = rafId
+      }
+    }
+
+    const state = {
+      pointers: new Map(),
+      startVb: null,
+      startDist: 0,
+      lastPointerX: 0,
+      lastPointerY: 0
+    }
+
+    const onPointerDown = e => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return
+      svg.setPointerCapture(e.pointerId)
+      const curVb = wrap.__mermaidCurViewBox
+      state.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+      if (state.pointers.size === 1) {
+        state.startVb = curVb.slice()
+        state.lastPointerX = e.clientX
+        state.lastPointerY = e.clientY
+      } else if (state.pointers.size === 2) {
+        const pts = [...state.pointers.values()]
+        const dx = pts[0].x - pts[1].x
+        const dy = pts[0].y - pts[1].y
+        state.startDist = Math.hypot(dx, dy)
+        state.startVb = curVb.slice()
+      }
+    }
+
+    const onPointerMove = e => {
+      if (!state.pointers.has(e.pointerId)) return
+      state.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+      const curVb = wrap.__mermaidCurViewBox
+      const rect = getRect()
+      if (state.pointers.size === 1 && state.startVb) {
+        const p = state.pointers.values().next().value
+        const dxClient = p.x - state.lastPointerX
+        const dyClient = p.y - state.lastPointerY
+        state.lastPointerX = p.x
+        state.lastPointerY = p.y
+        const dx = dxClient * (curVb[2] / rect.width)
+        const dy = dyClient * (curVb[3] / rect.height)
+        setCurVb([curVb[0] - dx, curVb[1] - dy, curVb[2], curVb[3]])
+        return
+      }
+      if (state.pointers.size === 2 && state.startVb && state.startDist > 0) {
+        const pts = [...state.pointers.values()]
+        const dx = pts[0].x - pts[1].x
+        const dy = pts[0].y - pts[1].y
+        const dist = Math.hypot(dx, dy)
+        if (!dist) return
+        const factor = state.startDist / dist
+        const cx = (pts[0].x + pts[1].x) / 2
+        const cy = (pts[0].y + pts[1].y) / 2
+        const px = curVb[0] + (cx - rect.left) * (curVb[2] / rect.width)
+        const py = curVb[1] + (cy - rect.top) * (curVb[3] / rect.height)
+        setCurVb(zoomAtPoint(state.startVb, factor, px, py))
+      }
+    }
+
+    const onPointerUpOrCancel = e => {
+      // Release PointerCapture to avoid event capture anomalies
+      if (svg.hasPointerCapture && svg.hasPointerCapture(e.pointerId)) {
+        svg.releasePointerCapture(e.pointerId)
+      }
+      state.pointers.delete(e.pointerId)
+      if (state.pointers.size === 0) {
+        state.startVb = null
+        state.startDist = 0
+      } else if (state.pointers.size === 1) {
+        const p = state.pointers.values().next().value
+        state.lastPointerX = p.x
+        state.lastPointerY = p.y
+      }
+    }
+
+    const onWheel = e => {
+      // Prevent event bubbling from triggering external scroll
+      e.preventDefault()
+      e.stopPropagation()
+      // Normalize deltaY across deltaMode (Chrome uses pixels, Safari uses lines)
+      let delta = e.deltaY
+      if (e.deltaMode === 1) delta *= 16
+      else if (e.deltaMode === 2) delta *= 400
+
+      // Continuous zoom factor: smoother than fixed 1.1/0.9 steps
+      const zoomFactor = Math.pow(1.001, delta)
+
+      const curVb = wrap.__mermaidCurViewBox
+      const rect = getRect()
+      const px = curVb[0] + (e.clientX - rect.left) * (curVb[2] / rect.width)
+      const py = curVb[1] + (e.clientY - rect.top) * (curVb[3] / rect.height)
+      setCurVb(zoomAtPoint(curVb, zoomFactor, px, py))
+    }
+
+    const onDblClick = () => {
+      const init = wrap.__mermaidInitViewBox
+      if (init) setCurVb(init)
+    }
+
+    svg.addEventListener('pointerdown', onPointerDown, { signal: ac.signal })
+    svg.addEventListener('pointermove', onPointerMove, { signal: ac.signal })
+    svg.addEventListener('pointerup', onPointerUpOrCancel, { signal: ac.signal })
+    svg.addEventListener('pointercancel', onPointerUpOrCancel, { signal: ac.signal })
+    svg.addEventListener('wheel', onWheel, { passive: false, signal: ac.signal })
+    svg.addEventListener('dblclick', onDblClick, { signal: ac.signal })
+  }
+
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      // Clean up event listeners before removing old SVG
+      if (item.__mermaidAbortController) {
+        item.__mermaidAbortController.abort()
+      }
+      const oldSvg = item.querySelector('svg')
+      if (oldSvg) oldSvg.remove()
+      let config = {}
+      try {
+        config = mermaidSrc.dataset.config ? JSON.parse(mermaidSrc.dataset.config) : {}
+      } catch (e) {
+        console.warn('[mermaid] failed to parse dataset.config:', e)
+      }
+      if (!config.theme) {
+        config.theme = theme
+      }
+      const mermaidThemeConfig = `%%{init: ${JSON.stringify(config)}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+        if (true) initMermaidGestures(item)
+        item.__mermaidOriginalSvg = svg
+        if (true) attachMermaidViewerButton(item)
+      }
+
+      const handleError = err => {
+        console.error(`[mermaid] render failed for block #${index}:`, err)
+        const errorEl = document.createElement('div')
+        errorEl.className = 'mermaid-error'
+        errorEl.textContent = `Mermaid render error: ${err.message || err}`
+        mermaidSrc.insertAdjacentElement('afterend', errorEl)
+      }
+
+      try {
+        const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+        // mermaid v9 and v10 compatibility
+        if (typeof renderFn === 'string') {
+          renderMermaid(renderFn)
+        } else {
+          renderFn.then(({ svg }) => renderMermaid(svg)).catch(handleError)
+        }
+      } catch (err) {
+        handleError(err)
+      }
+    })
+  }
+
+  const codeToMermaid = $article => {
+    const codeMermaidEle = $article.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    const $article = document.getElementById('article-container')
+    if (!$article) return
+
+    if (false) codeToMermaid($article)
+    const $mermaid = $article.querySelectorAll('.mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('/vendor/butterfly/mermaid/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const applyThemeDefaultsConfig = theme => {
+    if (theme === 'dark-mode') {
+      Chart.defaults.color = "rgba(255, 255, 255, 0.8)"
+      Chart.defaults.borderColor = "rgba(255, 255, 255, 0.2)"
+      Chart.defaults.scale.ticks.backdropColor = "transparent"
+    } else {
+      Chart.defaults.color = "rgba(0, 0, 0, 0.8)"
+      Chart.defaults.borderColor = "rgba(0, 0, 0, 0.1)"
+      Chart.defaults.scale.ticks.backdropColor = "transparent"
+    }
+  }
+
+  // Recursively traverse the config object and automatically apply theme-specific color schemes
+  const applyThemeConfig = (obj, theme) => {
+    if (typeof obj !== 'object' || obj === null) return
+
+    Object.keys(obj).forEach(key => {
+      const value = obj[key]
+      // If the property is an object and has theme-specific options, apply them
+      if (typeof value === 'object' && value !== null) {
+        if (value[theme]) {
+          obj[key] = value[theme] // Apply the value for the current theme
+        } else {
+          // Recursively process child objects
+          applyThemeConfig(value, theme)
+        }
+      }
+    })
+  }
+
+  const runChartJS = ele => {
+    window.loadChartJS = true
+
+    Array.from(ele).forEach((item, index) => {
+      const chartSrc = item.firstElementChild
+      const chartID = item.getAttribute('data-chartjs-id') || ('chartjs-' + index) // Use custom ID or default ID
+      const width = item.getAttribute('data-width')
+      const existingCanvas = document.getElementById(chartID)
+
+      // If a canvas already exists, remove it to avoid rendering duplicates
+      if (existingCanvas) {
+          existingCanvas.parentNode.remove()
+      }
+
+      const chartDefinition = chartSrc.textContent
+      const canvas = document.createElement('canvas')
+      canvas.id = chartID
+
+      const div = document.createElement('div')
+      div.className = 'chartjs-wrap'
+
+      if (width) {
+        div.style.width = width
+      }
+
+      div.appendChild(canvas)
+      chartSrc.insertAdjacentElement('afterend', div)
+
+      const ctx = document.getElementById(chartID).getContext('2d')
+
+      const config = JSON.parse(chartDefinition)
+
+      const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark-mode' : 'light-mode'
+
+      // Set default styles (initial setup)
+      applyThemeDefaultsConfig(theme)
+
+      // Automatically traverse the config and apply dual-mode color schemes
+      applyThemeConfig(config, theme)
+
+      new Chart(ctx, config)
+    })
+  }
+
+  const loadChartJS = () => {
+    const chartJSEle = document.querySelectorAll('#article-container .chartjs-container')
+    if (chartJSEle.length === 0) return
+
+    window.loadChartJS ? runChartJS(chartJSEle) : btf.getScript('/vendor/butterfly/chartjs/chart.umd.min.js').then(() => runChartJS(chartJSEle))
+  }
+
+  // Listen for theme change events
+  btf.addGlobalFn('themeChange', loadChartJS, 'chartjs')
+  btf.addGlobalFn('encrypt', loadChartJS, 'chartjs')
+
+  window.pjax ? loadChartJS() : document.addEventListener('DOMContentLoaded', loadChartJS)
+})()</script><script>(() => {
+  const abcjsInit = () => {
+    const abcjsFn = () => {
+      const $article = document.getElementById("article-container")
+      if (!$article || $article.querySelector(".hbe-container")) return
+
+      setTimeout(() => {
+        const sheets = $article.querySelectorAll(".abc-music-sheet")
+        for (let i = 0; i < sheets.length; i++) {
+          const ele = sheets[i]
+          if (ele.children.length > 0) continue
+
+          // Parse parameters from data-params attribute
+          let params = {}
+          const dp = ele.getAttribute("data-params")
+          if (dp) {
+            try {
+              params = JSON.parse(dp)
+            } catch (e) {
+              console.error("Failed to parse data-params:", e)
+            }
+          }
+
+          // Merge parsed parameters with the responsive option
+          // Ensures params content appears before responsive
+          const options = { ...params, responsive: "resize" }
+
+          // Render the music score using ABCJS.renderAbc
+          ABCJS.renderAbc(ele, ele.textContent, options)
+        }
+      }, 100)
+    }
+
+    if (typeof ABCJS === "object" && ABCJS !== null) {
+      abcjsFn()
+    } else {
+      btf.getScript("/vendor/butterfly/abcjs/abcjs-basic-min.js").then(abcjsFn)
+    }
+  }
+
+  if (window.pjax) {
+    abcjsInit()
+  } else {
+    window.addEventListener("load", abcjsInit)
+  }
+
+  btf.addGlobalFn("encrypt", abcjsInit, "abcjs")
+})()</script></div><canvas id="universe" aria-hidden="true"></canvas><script defer src="/js/universe.js"></script><script defer src="/js/tag-heatmap.js"></script><script defer src="/js/external-media-consent.js"></script><script defer src="/js/giscus-consent.js"></script><script defer src="/js/flashcard-sync-nav.js"></script><script src="/vendor/butterfly/pjax/pjax.min.js" defer="defer"></script><script>document.addEventListener('DOMContentLoaded', () => {
+  const pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+
+  window.pjax = new Pjax({
+    elements: 'a:not([target="_blank"]):not([data-fancybox])',
+    selectors: pjaxSelectors,
+    cacheBust: false,
+    analytics: false,
+    scrollRestoration: false
+  })
+
+  const triggerPjaxFn = (val) => {
+    if (!val) return
+    Object.values(val).forEach(fn => {
+      try {
+        fn()
+      } catch (err) {
+        console.debug('Pjax callback failed:', err)
+      }
+    })
+  }
+
+  document.addEventListener('pjax:send', () => {
+    // removeEventListener
+    btf.removeGlobalFnEvent('pjaxSendOnce')
+    btf.removeGlobalFnEvent('themeChange')
+
+    // reset readmode
+    const $bodyClassList = document.body.classList
+    if ($bodyClassList.contains('read-mode')) $bodyClassList.remove('read-mode')
+
+    triggerPjaxFn(window.globalFn.pjaxSend)
+  })
+
+  document.addEventListener('pjax:complete', () => {
+    btf.removeGlobalFnEvent('pjaxCompleteOnce')
+    document.querySelectorAll('script[data-pjax]').forEach(item => {
+      if (!item.parentNode) return
+      const newScript = document.createElement('script')
+      const content = item.text || item.textContent || ''
+      Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+      newScript.appendChild(document.createTextNode(content))
+      item.parentNode.replaceChild(newScript, item)
+    })
+
+    triggerPjaxFn(window.globalFn.pjaxComplete)
+  })
+
+  document.addEventListener('pjax:error', e => {
+    const responseURL = e.request && e.request.responseURL
+    if (e.request && e.request.status === 404) {
+      true
+        ? pjax.loadUrl('/404.html')
+        : responseURL && (window.location.href = responseURL)
+    } else if (responseURL) {
+      window.location.href = responseURL
+    }
+  })
+})</script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="输入关键词..." type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js?v=5.7.0"></script></div></div><!-- hexo injector body_end start --><script defer src="/flashcard-assets/ts-fsrs.umd.js"></script><script defer src="/flashcard-assets/flashcard-queue.js"></script><script id="hfc-sync-config-data" type="application/json">{"enabled":true,"url":"https://hkqqjttiqhwfdintqxpx.supabase.co","publishableKey":"sb_publishable_BYiAsjvfObJ1Kj26-YkVeQ_x4ruAFc4"}</script><script defer src="/flashcard-assets/supabase.js"></script><script defer src="/flashcard-assets/flashcard-sync.js"></script><script defer src="/flashcard-assets/flashcard.js"></script><!-- hexo injector body_end end --></body></html>

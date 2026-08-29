@@ -13,16 +13,7 @@
   let sharedClientSignature = '';
 
   function emptyProgress() {
-    return { version: 3, cards: {}, days: {} };
-  }
-
-  function normalizeProgress(value) {
-    if (!value || typeof value !== 'object') return emptyProgress();
-    return {
-      version: 3,
-      cards: value.cards && typeof value.cards === 'object' ? value.cards : {},
-      days: value.days && typeof value.days === 'object' ? value.days : {}
-    };
+    return { version: 3, cards: {}, days: {}, newCardDays: {} };
   }
 
   function clone(value) {
@@ -31,6 +22,61 @@
 
   function finiteNumber(value) {
     return Number.isFinite(value) ? value : null;
+  }
+
+  const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+  function validCardId(value) {
+    return typeof value === 'string' && value.length >= 1 && value.length <= 255;
+  }
+
+  function normalizeNewCardDays(value) {
+    const normalized = {};
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return normalized;
+
+    Object.entries(value).forEach(([key, day]) => {
+      if (!DATE_KEY_PATTERN.test(key) || !day || typeof day !== 'object' || Array.isArray(day)) return;
+      const source = day.started;
+      if (!source || typeof source !== 'object' || Array.isArray(source)) return;
+      const started = {};
+      Object.entries(source).forEach(([cardId, timestamp]) => {
+        const valueMs = finiteNumber(timestamp);
+        if (validCardId(cardId) && valueMs !== null && valueMs >= 0) started[cardId] = valueMs;
+      });
+      if (Object.keys(started).length) normalized[key] = { started };
+    });
+    return normalized;
+  }
+
+  function normalizeProgress(value) {
+    if (!value || typeof value !== 'object') return emptyProgress();
+    return {
+      version: 3,
+      cards: value.cards && typeof value.cards === 'object' ? value.cards : {},
+      days: value.days && typeof value.days === 'object' ? value.days : {},
+      newCardDays: normalizeNewCardDays(value.newCardDays)
+    };
+  }
+
+  function mergeNewCardDays(localValue, cloudValue) {
+    const local = normalizeNewCardDays(localValue);
+    const cloud = normalizeNewCardDays(cloudValue);
+    const merged = {};
+    const dateKeys = new Set([...Object.keys(local), ...Object.keys(cloud)]);
+
+    dateKeys.forEach((key) => {
+      const localStarted = local[key]?.started || {};
+      const cloudStarted = cloud[key]?.started || {};
+      const started = {};
+      const cardIds = new Set([...Object.keys(localStarted), ...Object.keys(cloudStarted)]);
+      cardIds.forEach((cardId) => {
+        const values = [finiteNumber(localStarted[cardId]), finiteNumber(cloudStarted[cardId])].filter((value) => value !== null);
+        if (values.length) started[cardId] = Math.min(...values);
+      });
+      if (Object.keys(started).length) merged[key] = { started };
+    });
+
+    return merged;
   }
 
   function githubAvatarUrl(currentSession) {
@@ -128,6 +174,8 @@
       if (Object.keys(cards).length) merged.days[dateKey] = { cards };
     });
 
+    merged.newCardDays = mergeNewCardDays(local.newCardDays, cloud.newCardDays);
+
     return merged;
   }
 
@@ -221,9 +269,12 @@
         }
 
         const resetAdvanced = serverResetVersion > requestResetVersion;
+        const serverProgress = normalizeProgress(data.progress);
+        const serverSupportsNewCardDays = Object.prototype.hasOwnProperty.call(data.progress, 'newCardDays');
         const nextProgress = resetAdvanced
-          ? normalizeProgress(data.progress)
-          : mergeProgress(getProgress(), data.progress);
+          ? serverProgress
+          : mergeProgress(getProgress(), serverProgress);
+        if (!resetAdvanced && serverSupportsNewCardDays) nextProgress.newCardDays = serverProgress.newCardDays;
         meta.resetVersion = serverResetVersion;
         const derivedChange = applyProgress(nextProgress) === true;
         if (derivedChange) mutationVersion += 1;
@@ -436,5 +487,14 @@
     };
   }
 
-  return { SYNC_STORAGE_KEY, createAuthController, createSyncController, emptyProgress, mergeProgress, normalizeProgress };
+  return {
+    SYNC_STORAGE_KEY,
+    createAuthController,
+    createSyncController,
+    emptyProgress,
+    mergeNewCardDays,
+    mergeProgress,
+    normalizeNewCardDays,
+    normalizeProgress
+  };
 });

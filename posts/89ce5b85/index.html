@@ -6,8 +6,8 @@
 <meta property="og:description" content="建立 Linux 命令学习、实验安全、课程依赖和证据化排障的完整入口。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://koco-co.github.io/img/picgo-images/linux-course-cover.png">
-<meta property="article:published_time" content="2026-08-24T16:00:00.000Z">
-<meta property="article:modified_time" content="2026-08-25T09:35:35.459Z">
+<meta property="article:published_time" content="2026-03-09T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-08-29T15:00:10.014Z">
 <meta property="article:author" content="𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮">
 <meta property="article:tag" content="Linux">
 <meta property="article:tag" content="学习路线">
@@ -18,8 +18,8 @@
   "headline": "Linux(一)入门路线",
   "url": "https://koco-co.github.io/posts/89ce5b85/",
   "image": "https://koco-co.github.io/img/picgo-images/linux-course-cover.png",
-  "datePublished": "2026-08-24T16:00:00.000Z",
-  "dateModified": "2026-08-25T09:35:35.459Z",
+  "datePublished": "2026-03-09T16:00:00.000Z",
+  "dateModified": "2026-08-29T15:00:10.014Z",
   "author": [
     {
       "@type": "Person",
@@ -27,51 +27,92 @@
       "url": "https://koco-co.github.io"
     }
   ]
-}</script><link rel="shortcut icon" href="/img/favicon.ico"><link rel="canonical" href="https://koco-co.github.io/posts/89ce5b85/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css?v=5.5.3"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.1.0/css/all.min.css"><script>
+}</script><link rel="shortcut icon" href="/img/favicon.ico"><link rel="canonical" href="https://koco-co.github.io/posts/89ce5b85/index.html"><link rel="preconnect"/><link rel="stylesheet" href="/css/index.css?v=5.7.0"><link rel="stylesheet" href="/vendor/butterfly/fontawesome/css/all.min.css"><script>
     (() => {
       
     const saveToLocal = {
       set: (key, value, ttl) => {
-        if (!ttl) return
-        const expiry = Date.now() + ttl * 86400000
-        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+        const data = { value }
+
+        if (ttl != null) {
+          data.expiry = Date.now() + ttl * 86400000
+        }
+
+        localStorage.setItem(key, JSON.stringify(data))
       },
       get: key => {
         const itemStr = localStorage.getItem(key)
-        if (!itemStr) return undefined
-        const { value, expiry } = JSON.parse(itemStr)
-        if (Date.now() > expiry) {
+        if (!itemStr) return
+
+        try {
+          const data = JSON.parse(itemStr)
+
+          if (data.expiry && Date.now() > data.expiry) {
+            localStorage.removeItem(key)
+            return
+          }
+
+          return data.value
+        } catch {
           localStorage.removeItem(key)
-          return undefined
         }
-        return value
       }
     }
 
+    const scriptCache = new Map()
+    const cssCache = new Map()
     window.btf = {
       saveToLocal,
-      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
-        const script = document.createElement('script')
-        script.src = url
-        script.async = true
-        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
-        script.onload = script.onreadystatechange = () => {
-          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+      getScript: (url, attr = {}) => {
+        if (scriptCache.has(url)) {
+          return scriptCache.get(url)
         }
-        script.onerror = reject
-        document.head.appendChild(script)
-      }),
-      getCSS: (url, id) => new Promise((resolve, reject) => {
-        const link = document.createElement('link')
-        link.rel = 'stylesheet'
-        link.href = url
-        if (id) link.id = id
-        link.onload = link.onreadystatechange = () => {
-          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+
+        const promise = new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+
+          script.src = url
+          script.async = true
+
+          for (const key in attr) {
+            script.setAttribute(key, attr[key])
+          }
+
+          script.onload = resolve
+          script.onerror = reject
+
+          document.head.appendChild(script)
+        })
+
+        scriptCache.set(url, promise)
+
+        return promise
+      },
+      getCSS: (url, id) => {
+        if (cssCache.has(url)) {
+          return cssCache.get(url)
         }
-        link.onerror = reject
-        document.head.appendChild(link)
-      }),
+
+        const promise = new Promise((resolve, reject) => {
+          const link = document.createElement('link')
+
+          link.rel = 'stylesheet'
+          link.href = url
+
+          if (id) {
+            link.id = id
+          }
+
+          link.onload = resolve
+          link.onerror = reject
+
+          document.head.appendChild(link)
+        })
+
+        cssCache.set(url, promise)
+
+        return promise
+      },
       addGlobalFn: (key, fn, name = false, parent = window) => {
         if (!true && key.startsWith('pjax')) return
         const globalFn = parent.globalFn || {}
@@ -82,16 +123,17 @@
     }
   
       
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]')
       const activateDarkMode = () => {
-        document.documentElement.setAttribute('data-theme', 'dark')
-        if (document.querySelector('meta[name="theme-color"]') !== null) {
-          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        document.documentElement.dataset.theme = 'dark'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#0d0d0d')
         }
       }
       const activateLightMode = () => {
-        document.documentElement.setAttribute('data-theme', 'light')
-        if (document.querySelector('meta[name="theme-color"]') !== null) {
-          document.querySelector('meta[name="theme-color"]').setAttribute('content', 'ffffff')
+        document.documentElement.dataset.theme = 'light'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', 'ffffff')
         }
       }
 
@@ -108,10 +150,15 @@
             else if (mediaQueryDark.matches) activateDarkMode()
             else {
               const hour = new Date().getHours()
-              const isNight = hour <= 10 || hour >= 22
+              const start = 10
+              const end = 22
+              const isNight =
+                start < end
+                    ? hour < start || hour >= end
+                    : hour >= start || hour < end
               isNight ? activateDarkMode() : activateLightMode()
             }
-            mediaQueryDark.addEventListener('change', () => {
+            mediaQueryDark.addEventListener('change', e => {
               if (saveToLocal.get('theme') === undefined) {
                 e.matches ? activateDarkMode() : activateLightMode()
               }
@@ -162,7 +209,7 @@
   lightbox: 'null',
   Snackbar: undefined,
   infinitegrid: {
-    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.12.0/dist/infinitegrid.min.js',
+    js: '/vendor/butterfly/infinitegrid/infinitegrid.min.js',
     buttonText: '加载更多'
   },
   isPhotoFigcaption: false,
@@ -178,11 +225,17 @@
   isHighlightShrink: false,
   isToc: true,
   pageType: 'post'
-}</script><link rel="stylesheet" href="/css/custom.css" media="defer" onload="this.media='all'"><link rel="stylesheet" href="/css/universe.css"><link rel="stylesheet" href="/css/page-archive-categories-tags.css" media="defer" onload="this.media='all'"><link rel="stylesheet" href="/css/post-tags.css" media="defer" onload="this.media='all'"><link rel="stylesheet" href="//at.alicdn.com/t/c/font_5107453_kyxe7zjyy0h.css" media="defer" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/l-lin/font-awesome-animation/dist/font-awesome-animation.min.css"  media="defer" onload="this.media='all'"><!-- hexo injector head_end start --><link rel="stylesheet" href="/flashcard-assets/flashcard.css"><link rel="stylesheet" href="https://npm.elemecdn.com/hexo-butterfly-tag-plugins-plus@latest/lib/assets/font-awesome-animation.min.css" media="defer" onload="this.media='all'"><link rel="stylesheet" href="https://npm.elemecdn.com/hexo-butterfly-tag-plugins-plus@latest/lib/tag_plugins.css" media="defer" onload="this.media='all'"><script src="https://npm.elemecdn.com/hexo-butterfly-tag-plugins-plus@latest/lib/assets/carousel-touch.js"></script><!-- hexo injector head_end end --><meta name="generator" content="Hexo 8.1.1"></head><body><div class="bg-animation" id="web_bg" style="background-image: url(/img/background.jpg);"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/sisyphus-vale-avatar.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">27</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">78</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><span class="site-page group hide"><i class="fa-fw fas fa-book"></i><span> 文章</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/learn-topic/"><i class="fa-fw fas fa-graduation-cap"></i><span> 复习</span></a></div><div class="menus_item"><a class="site-page" href="/video/"><i class="fa-fw fas fa-video"></i><span> 视频</span></a></div><div class="menus_item"><a class="site-page" href="/wallpaper/"><i class="fa-fw fas fa-image"></i><span> 照片</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(/img/picgo-images/linux-course-cover.png);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮'𝓼 𝓦𝓸𝓻𝓴𝓢𝓹𝓪𝓬𝓮</span></a><a class="nav-page-title" href="/"><span class="site-name">Linux(一)入门路线</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><span class="site-page group hide"><i class="fa-fw fas fa-book"></i><span> 文章</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/learn-topic/"><i class="fa-fw fas fa-graduation-cap"></i><span> 复习</span></a></div><div class="menus_item"><a class="site-page" href="/video/"><i class="fa-fw fas fa-video"></i><span> 视频</span></a></div><div class="menus_item"><a class="site-page" href="/wallpaper/"><i class="fa-fw fas fa-image"></i><span> 照片</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Linux(一)入门路线<a class="post-edit-link" href="https://github.com/koco-co/koco-co.github.io/edit/main/source/_posts/learn-topic/linux/Linux(一)入门路线.md" title="编辑" target="_blank"><i class="fas fa-pencil-alt"></i></a></h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-08-24T16:00:00.000Z" title="发表于 2026-08-25 00:00:00">2026-08-25</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-08-25T09:35:35.459Z" title="更新于 2026-08-25 17:35:35">2026-08-25</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Learn-Topic/">Learn Topic</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Learn-Topic/Linux/">Linux</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">1.2k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>4分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><nav class="course-series-nav" aria-label="Linux 文章进度"><div class="course-series-nav__header"><div class="course-series-nav__heading"><strong>Linux 文章进度</strong></div></div><div class="course-series-nav__progress" role="progressbar" aria-label="文章进度" aria-valuemin="1" aria-valuemax="1" aria-valuenow="1"><span style="width: 100.0000%"></span></div><ol class="course-series-nav__list"><li class="course-series-nav__item is-current"><a href="/posts/89ce5b85/" aria-current="page"><span class="course-series-nav__index">01</span><span class="course-series-nav__title">Linux(一)入门路线</span></a></li></ol></nav>
+}</script><link rel="stylesheet" href="/css/custom.css"><link rel="stylesheet" href="/css/universe.css"><link rel="stylesheet" href="/css/page-archive-categories-tags.css"><link rel="stylesheet" href="/css/post-tags.css"><link rel="stylesheet" href="/css/external-media.css"><!-- hexo injector head_end start --><link rel="stylesheet" href="/flashcard-assets/flashcard.css"><link rel="stylesheet" href="/vendor/tag-plugins-plus/font-awesome-animation.min.css" media="defer" onload="this.media='all'"><link rel="stylesheet" href="/vendor/tag-plugins-plus/tag-plugins.css" media="defer" onload="this.media='all'"><script src="/vendor/tag-plugins-plus/carousel-touch.js"></script><!-- hexo injector head_end end --><meta name="generator" content="Hexo 8.1.2"></head><body><div class="bg-animation" id="web_bg" style="background-image: url(/img/background.jpg);"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/sisyphus-vale-avatar.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">232</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">157</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">23</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><span class="site-page group hide"><i class="fa-fw fas fa-book"></i><span> 文章</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/learn-topic/"><i class="fa-fw fas fa-graduation-cap"></i><span> 复习</span></a></div><div class="menus_item"><a class="site-page" href="/video/"><i class="fa-fw fas fa-video"></i><span> 视频</span></a></div><div class="menus_item"><a class="site-page" href="/wallpaper/"><i class="fa-fw fas fa-image"></i><span> 照片</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(/img/picgo-images/linux-course-cover.png);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮'𝓼 𝓦𝓸𝓻𝓴𝓢𝓹𝓪𝓬𝓮</span></a><a class="nav-page-title" href="/"><span class="site-name">Linux(一)入门路线</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><span class="site-page group hide"><i class="fa-fw fas fa-book"></i><span> 文章</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/learn-topic/"><i class="fa-fw fas fa-graduation-cap"></i><span> 复习</span></a></div><div class="menus_item"><a class="site-page" href="/video/"><i class="fa-fw fas fa-video"></i><span> 视频</span></a></div><div class="menus_item"><a class="site-page" href="/wallpaper/"><i class="fa-fw fas fa-image"></i><span> 照片</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Linux(一)入门路线<a class="post-edit-link" href="https://github.com/koco-co/hexo-blog/edit/main/source/_posts/learn-topic/linux/Linux(一)入门路线.md" title="编辑" target="_blank"><i class="fas fa-pencil-alt"></i></a></h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-03-09T16:00:00.000Z" title="发表于 2026-03-10 00:00:00">2026-03-10</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-08-29T15:00:10.014Z" title="更新于 2026-08-29 23:00:10">2026-08-29</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Learn-Topic/">Learn Topic</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Learn-Topic/Linux/">Linux</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">1.3k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>4分钟</span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><nav class="course-series-nav" aria-label="Linux 文章进度"><div class="course-series-nav__header"><div class="course-series-nav__heading"><strong>Linux 文章进度</strong></div></div><div class="course-series-nav__progress" role="progressbar" aria-label="文章进度" aria-valuemin="1" aria-valuemax="13" aria-valuenow="1"><span style="width: 7.6923%"></span></div><ol class="course-series-nav__list"><li class="course-series-nav__item is-current"><a href="/posts/89ce5b85/" aria-current="page"><span class="course-series-nav__index">01</span><span class="course-series-nav__title">Linux(一)入门路线</span></a></li><li class="course-series-nav__item"><a href="/posts/6153b09f/"><span class="course-series-nav__index">02</span><span class="course-series-nav__title">Linux(二)系统与命令行基础</span></a></li><li class="course-series-nav__item"><a href="/posts/5297e207/"><span class="course-series-nav__index">03</span><span class="course-series-nav__title">Linux(三)文件与存储管理</span></a></li><li class="course-series-nav__item"><a href="/posts/33859692/"><span class="course-series-nav__index">04</span><span class="course-series-nav__title">Linux(四)文本处理与数据提取</span></a></li><li class="course-series-nav__item"><a href="/posts/72c1404c/"><span class="course-series-nav__index">05</span><span class="course-series-nav__title">Linux(五)Shell 语法与命令组合</span></a></li><li class="course-series-nav__item"><a href="/posts/5a63b164/"><span class="course-series-nav__index">06</span><span class="course-series-nav__title">Linux(六)用户权限与软件管理</span></a></li><li class="course-series-nav__item"><a href="/posts/23ca1872/"><span class="course-series-nav__index">07</span><span class="course-series-nav__title">Linux(七)进程任务与服务管理</span></a></li><li class="course-series-nav__item"><a href="/posts/3a757ef9/"><span class="course-series-nav__index">08</span><span class="course-series-nav__title">Linux(八)网络连接与远程排障</span></a></li><li class="course-series-nav__item"><a href="/posts/cade4656/"><span class="course-series-nav__index">09</span><span class="course-series-nav__title">Linux(九)日志查看与故障定位</span></a></li><li class="course-series-nav__item"><a href="/posts/997240e7/"><span class="course-series-nav__index">10</span><span class="course-series-nav__title">Linux(十)性能分析与资源诊断</span></a></li><li class="course-series-nav__item"><a href="/posts/496664b1/"><span class="course-series-nav__index">11</span><span class="course-series-nav__title">Linux(十一)Bash 脚本与任务自动化</span></a></li><li class="course-series-nav__item"><a href="/posts/9efa11cb/"><span class="course-series-nav__index">12</span><span class="course-series-nav__title">Linux(十二)进阶路线</span></a></li><li class="course-series-nav__item"><a href="/posts/c0dffe07/"><span class="course-series-nav__index">13</span><span class="course-series-nav__title">Linux(十三)综合实战</span></a></li></ol></nav>
+
 <div class="note info flat"><p>本篇只说明课程范围、依赖和开始方式；具体知识点与面试复习题放在对应主题文章。</p>
 </div>
-<h2 id="课程目标"><a href="#课程目标" class="headerlink" title="课程目标"></a>课程目标</h2><p>这是一套面向零基础到系统排障的 Linux 命令行课程。重点覆盖常用命令、中文场景选命令、Shell 组合、日志查看、性能分析、Bash 自动化和面试复述。主实验基线为 Ubuntu Server 26.04 LTS，同时说明 POSIX.1-2024、Bash 5.3、GNU/uutils 及发行版差异。</p>
-<h2 id="前置条件"><a href="#前置条件" class="headerlink" title="前置条件"></a>前置条件</h2><p>不要求 Linux 经验。准备一台可丢弃的 Ubuntu Server、WSL2 或虚拟机，并为文件、服务、日志和负载实验建立隔离目录。生产机器、真实凭据和破坏性设备操作不在课程实验范围内。</p>
+
+<h2 id="课程目标"><a href="#课程目标" class="headerlink" title="课程目标"></a>课程目标</h2><div class="note info flat"><p>这是一套面向零基础到系统排障的 Linux 命令行课程。重点覆盖常用命令、中文场景选命令、Shell 组合、日志查看、性能分析、Bash 自动化和面试复述。主实验基线为 Ubuntu Server 26.04 LTS，同时说明 POSIX.1-2024、Bash 5.3、GNU&#x2F;uutils 及发行版差异。</p>
+</div>
+
+<h2 id="前置条件"><a href="#前置条件" class="headerlink" title="前置条件"></a>前置条件</h2><div class="note warning flat"><p>不要求 Linux 经验。准备一台可丢弃的 Ubuntu Server、WSL2 或虚拟机，并为文件、服务、日志和负载实验建立隔离目录。生产机器、真实凭据和破坏性设备操作不在课程实验范围内。</p>
+</div>
+
 <h2 id="学习路径"><a href="#学习路径" class="headerlink" title="学习路径"></a>学习路径</h2><div class="mermaid-wrap"><pre class="mermaid-src" data-config="{}" hidden>
     flowchart TD
   A[入门路线] --&gt; B[系统与命令行基础]
@@ -198,9 +251,11 @@
   K --&gt; L[进阶路线（可选）]
   K --&gt; M[综合实战]
   </pre></div>
-<p>每篇文章都按“机制 → 命令选择 → 完整示例 → 失败边界 → 结果验证”推进。第 12 篇是可选拓展，第 13 篇不依赖第 12 篇。</p>
-<h2 id="文章安排"><a href="#文章安排" class="headerlink" title="文章安排"></a>文章安排</h2><div class="table-container">
-<table>
+
+<div class="note info flat"><p>每篇文章都按“机制 → 命令选择 → 完整示例 → 失败边界 → 结果验证”推进。第 12 篇是可选拓展，第 13 篇不依赖第 12 篇。</p>
+</div>
+
+<h2 id="文章安排"><a href="#文章安排" class="headerlink" title="文章安排"></a>文章安排</h2><table>
 <thead>
 <tr>
 <th>顺序</th>
@@ -210,8 +265,7 @@
 <th>状态</th>
 </tr>
 </thead>
-<tbody>
-<tr>
+<tbody><tr>
 <td>1</td>
 <td>Linux(一)入门路线</td>
 <td>建立课程目标、安全实验环境、学习顺序、命令学习模型和排障证据链。</td>
@@ -220,123 +274,394 @@
 </tr>
 <tr>
 <td>2</td>
-<td>Linux(二)系统与命令行基础</td>
+<td><a href="/posts/6153b09f/">Linux(二)系统与命令行基础</a></td>
 <td>掌握 Linux 组成、目录层级、终端与 Shell、路径、环境变量、命令解析和帮助系统。</td>
 <td>第 1 篇。</td>
-<td>未发布占位</td>
+<td>已发布</td>
 </tr>
 <tr>
 <td>3</td>
-<td>Linux(三)文件与存储管理</td>
+<td><a href="/posts/5297e207/">Linux(三)文件与存储管理</a></td>
 <td>掌握文件、目录项、inode、文件描述符、链接、归档、文件系统和容量。</td>
 <td>第 2 篇。</td>
-<td>未发布占位</td>
+<td>已发布</td>
 </tr>
 <tr>
 <td>4</td>
-<td>Linux(四)文本处理与数据提取</td>
+<td><a href="/posts/33859692/">Linux(四)文本处理与数据提取</a></td>
 <td>从文本和日志中筛选、转换、分组、排序并生成可复现结论。</td>
 <td>第 3 篇。</td>
-<td>未发布占位</td>
+<td>已发布</td>
 </tr>
 <tr>
 <td>5</td>
-<td>Linux(五)Shell 语法与命令组合</td>
+<td><a href="/posts/72c1404c/">Linux(五)Shell 语法与命令组合</a></td>
 <td>解释 Shell 如何解析、展开、重定向、连接和判断命令，使组合命令保持正确。</td>
 <td>第 2～4 篇。</td>
-<td>未发布占位</td>
+<td>已发布</td>
 </tr>
 <tr>
 <td>6</td>
-<td>Linux(六)用户权限与软件管理</td>
+<td><a href="/posts/5a63b164/">Linux(六)用户权限与软件管理</a></td>
 <td>掌握身份、权限计算、所有权、提权和软件包生命周期。</td>
 <td>第 2、5 篇。</td>
-<td>未发布占位</td>
+<td>已发布</td>
 </tr>
 <tr>
 <td>7</td>
-<td>Linux(七)进程任务与服务管理</td>
+<td><a href="/posts/23ca1872/">Linux(七)进程任务与服务管理</a></td>
 <td>掌握进程状态、信号、作业控制、优先级、systemd 服务和定时任务。</td>
 <td>第 2、5、6 篇。</td>
-<td>未发布占位</td>
+<td>已发布</td>
 </tr>
 <tr>
 <td>8</td>
-<td>Linux(八)网络连接与远程排障</td>
+<td><a href="/posts/3a757ef9/">Linux(八)网络连接与远程排障</a></td>
 <td>按网卡、路由、DNS、Socket、TLS、应用请求和抓包逐层定位网络问题。</td>
 <td>第 2、5 篇；建议具备第 7 篇进程背景。</td>
-<td>未发布占位</td>
+<td>已发布</td>
 </tr>
 <tr>
 <td>9</td>
-<td>Linux(九)日志查看与故障定位</td>
+<td><a href="/posts/cade4656/">Linux(九)日志查看与故障定位</a></td>
 <td>关联应用日志、Journal、内核消息、崩溃信息、轮转文件和压缩历史，恢复故障时间线。</td>
 <td>第 4、5、7 篇。</td>
-<td>未发布占位</td>
+<td>已发布</td>
 </tr>
 <tr>
 <td>10</td>
-<td>Linux(十)性能分析与资源诊断</td>
-<td>用统一方法区分 CPU、内存、I/O、容量、网络和进程瓶颈，正确解释采样指标。</td>
+<td><a href="/posts/997240e7/">Linux(十)性能分析与资源诊断</a></td>
+<td>用统一方法区分 CPU、内存、I&#x2F;O、容量、网络和进程瓶颈，正确解释采样指标。</td>
 <td>第 3、7、8、9 篇。</td>
-<td>未发布占位</td>
+<td>已发布</td>
 </tr>
 <tr>
 <td>11</td>
-<td>Linux(十一)Bash 脚本与任务自动化</td>
+<td><a href="/posts/496664b1/">Linux(十一)Bash 脚本与任务自动化</a></td>
 <td>把交互命令转化为输入明确、错误可见、可清理、可验证的脚本。</td>
 <td>第 4～7 篇。</td>
-<td>未发布占位</td>
+<td>已发布</td>
 </tr>
 <tr>
 <td>12</td>
-<td>Linux(十二)进阶路线</td>
+<td><a href="/posts/9efa11cb/">Linux(十二)进阶路线</a></td>
 <td>承接低频、平台相关、需要权限或可能产生较高风险的能力，不阻塞主课程。</td>
 <td>第 7～11 篇；第 13 篇不要求本篇。</td>
-<td>未发布占位</td>
+<td>已发布</td>
 </tr>
 <tr>
 <td>13</td>
-<td>Linux(十三)综合实战</td>
+<td><a href="/posts/c0dffe07/">Linux(十三)综合实战</a></td>
 <td>把文件、进程、服务、日志、性能和网络能力整合为完整故障诊断，并训练面试复述。</td>
 <td>第 3～11 篇；第 12 篇可选。</td>
-<td>未发布占位</td>
+<td>已发布</td>
 </tr>
-</tbody>
-</table>
+</tbody></table>
+<h2 id="开始学习"><a href="#开始学习" class="headerlink" title="开始学习"></a>开始学习</h2><div class="note info flat"><p>每个实验都先确认输入和安全边界，再执行命令、解释输出并完成清理。高频命令使用双向闪卡，日志与性能内容补充字段和指标解释，危险操作单独标出安全边界；跨文章重复的问题统一引用既有闪卡。</p>
 </div>
-<h2 id="开始学习"><a href="#开始学习" class="headerlink" title="开始学习"></a>开始学习</h2><p>先完成当前文章的实验和自测，再进入下一篇。每个高频命令都会同时提供“命令到中文”和“中文场景到命令”闪卡；日志与性能文章增加字段和指标解释卡，危险操作增加安全边界卡。跨文章复用的问题使用 flashcard_ref，综合实战只复用既有卡片并新增一张证据链卡。</p>
+
 <h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><div class="link-group"><div class="tag link"><a class="link-card" title="POSIX.1-2024" target="_blank" rel="noopener" href="https://pubs.opengroup.org/onlinepubs/9799919799/"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://pubs.opengroup.org/favicon.ico"/></div><div class="right"><p class="text">POSIX.1-2024</p><p class="url">https://pubs.opengroup.org/onlinepubs/9799919799/</p></div></a></div>
 <div class="tag link"><a class="link-card" title="GNU Bash Reference Manual" target="_blank" rel="noopener" href="https://www.gnu.org/software/bash/manual/"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://www.gnu.org/favicon.ico"/></div><div class="right"><p class="text">GNU Bash Reference Manual</p><p class="url">https://www.gnu.org/software/bash/manual/</p></div></a></div>
 <div class="tag link"><a class="link-card" title="Ubuntu Server documentation" target="_blank" rel="noopener" href="https://documentation.ubuntu.com/server/"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://documentation.ubuntu.com/favicon.ico"/></div><div class="right"><p class="text">Ubuntu Server documentation</p><p class="url">https://documentation.ubuntu.com/server/</p></div></a></div>
 <div class="tag link"><a class="link-card" title="Linux kernel documentation" target="_blank" rel="noopener" href="https://docs.kernel.org/"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://www.kernel.org/theme/images/logos/favicon.png"/></div><div class="right"><p class="text">Linux kernel documentation</p><p class="url">https://docs.kernel.org/</p></div></a></div>
 <div class="tag link"><a class="link-card" title="systemd manual" target="_blank" rel="noopener" href="https://www.freedesktop.org/software/systemd/man/latest/"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://www.freedesktop.org/favicon.ico"/></div><div class="right"><p class="text">systemd manual</p><p class="url">https://www.freedesktop.org/software/systemd/man/latest/</p></div></a></div>
 <div class="tag link"><a class="link-card" title="iproute2 source archive" target="_blank" rel="noopener" href="https://www.kernel.org/pub/linux/utils/net/iproute2/"><div class="left"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://www.kernel.org/theme/images/logos/favicon.png"/></div><div class="right"><p class="text">iproute2 source archive</p><p class="url">https://www.kernel.org/pub/linux/utils/net/iproute2/</p></div></a></div></div>
-</article><div class="post-copyright"><div class="post-copyright__title"><span class="post-copyright-info"><h>Linux(一)入门路线</h></span></div><div class="post-copyright__type"><span class="post-copyright-info"><a href="https://koco-co.github.io/posts/89ce5b85/">https://koco-co.github.io/posts/89ce5b85/</a></span></div><div class="post-copyright-m"><div class="post-copyright-m-info"><div class="post-copyright-a"><h>作者</h><div class="post-copyright-cc-info"><h>𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮</h></div></div><div class="post-copyright-c"><h>发布于</h><div class="post-copyright-cc-info"><h>2026-08-25</h></div></div><div class="post-copyright-u"><h>更新于</h><div class="post-copyright-cc-info"><h>2026-08-25</h></div></div><div class="post-copyright-c"><h>许可协议</h><div class="post-copyright-cc-info"><a class="icon" rel="noopener" target="_blank" title="Creative Commons" href="https://creativecommons.org/"><i class="fab fa-creative-commons"></i></a><a rel="noopener" target="_blank" title="CC BY-NC-SA 4.0" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a></div></div></div></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Linux/">Linux</a><a class="post-meta__tags" href="/tags/%E5%AD%A6%E4%B9%A0%E8%B7%AF%E7%BA%BF/">学习路线</a></div><div class="post-share"></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞助</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechat.jpeg" target="_blank"><img class="post-qr-code-img" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/wechat.jpeg"/></a><div class="post-qr-code-desc"></div></li><li class="reward-item"><a href="/img/alipay.jpeg" target="_blank"><img class="post-qr-code-img" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/alipay.jpeg"/></a><div class="post-qr-code-desc"></div></li></ul></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/347ce4f2/" title="计算机网络(一)入门路线"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/computer-network-course-cover.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">计算机网络(一)入门路线</div></div><div class="info-2"><div class="info-item-1">建立计算机网络的学习坐标、依赖顺序、资料边界和复习方式，为后续分层、寻址、传输、HTTP 与排障文章提供统一入口。</div></div></div></a><a class="pagination-related" href="/posts/5ce76fb/" title="Playwright(一)入门路线"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/playwright-course-cover.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Playwright(一)入门路线</div></div><div class="info-2"><div class="info-item-1">面向具备 Python 基础的零 Playwright 读者，按知识依赖顺序学习环境、定位、断言、交互、组件、上下文、框架、网络、调试交付、进阶能力与项目实战。</div></div></div></a></nav><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="giscus-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/sisyphus-vale-avatar.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮</div><div class="author-info-description">身如柳絮随风扬 无论云泥意贯一</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">27</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">78</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">14</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/koco-co"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons"><!-- each url, icon in theme.social--><!--   ---><!--     const [link, title, color] = url.split('||').map(i => trim(i))--><!--     const href = url_for(link)--><!--     const iconStyle = color ? `color: ${color.replace(/[\'\"]/g, '')};` : ''--><!--     const iconTitle = title || ''--><!--   a.social-icon(href=href target="_blank" title=iconTitle)--><!--     i(class=icon style=iconStyle)--><a class="social-icon faa-parent animated-hover" href="mailto:kopohub@gmail.com" target="_blank" title="Email"><svg class="social_icon faa-tada" aria-hidden="true"><use xlink:href="#icon-Gmail"></use></svg></a><a class="social-icon faa-parent animated-hover" href="https://v.douyin.com/uk6DHVS-OrI" target="_blank" title="TikTok"><svg class="social_icon faa-tada" aria-hidden="true"><use xlink:href="#icon-douyin"></use></svg></a><a class="social-icon faa-parent animated-hover" href="https://space.bilibili.com/3546823172033014" target="_blank" title="Bilibili"><svg class="social_icon faa-tada" aria-hidden="true"><use xlink:href="#icon-bilibili3"></use></svg></a><a class="social-icon faa-parent animated-hover" href="https://x.com/SugerQvQ" target="_blank" title="Twitter"><svg class="social_icon faa-tada" aria-hidden="true"><use xlink:href="#icon-tuite1"></use></svg></a><a class="social-icon faa-parent animated-hover" href="https://steamcommunity.com/profiles/76561199483116375/" target="_blank" title="Steam"><svg class="social_icon faa-tada" aria-hidden="true"><use xlink:href="#icon-steam"></use></svg></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content"><center>
-  <b>主节点：</b> <a target="_blank" rel="noopener" href="https://llg01.com/#/register?code=D3GEDzcQ" title="流量光机场"><font color="#5ea6e5">流量光机场</font></a>
-  </br>
-  <b>备用节点：</b> <a target="_blank" rel="noopener" href="https://yoyapai.com/category/mianfeijiedian" title="免费节点分享"><font color="#5ea6e5">免费节点分享</font></a>
-</center></div><!-- 添加欢迎访客的信息--><div id="welcome-info"></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AF%BE%E7%A8%8B%E7%9B%AE%E6%A0%87"><span class="toc-number">1.</span> <span class="toc-text">课程目标</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E7%BD%AE%E6%9D%A1%E4%BB%B6"><span class="toc-number">2.</span> <span class="toc-text">前置条件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AD%A6%E4%B9%A0%E8%B7%AF%E5%BE%84"><span class="toc-number">3.</span> <span class="toc-text">学习路径</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%87%E7%AB%A0%E5%AE%89%E6%8E%92"><span class="toc-number">4.</span> <span class="toc-text">文章安排</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%80%E5%A7%8B%E5%AD%A6%E4%B9%A0"><span class="toc-number">5.</span> <span class="toc-text">开始学习</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-number">6.</span> <span class="toc-text">参考资料</span></a></li></ol></div></div><div class="card-widget card-post-series"><div class="item-headline"><i class="fa-solid fa-layer-group"></i><span>系列文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/posts/89ce5b85/" title="Linux(一)入门路线"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/linux-course-cover.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Linux(一)入门路线"></a><div class="content"><a class="title" href="/posts/89ce5b85/" title="Linux(一)入门路线">Linux(一)入门路线</a><time datetime="2026-08-24T16:00:00.000Z" title="发表于 2026-08-25 00:00:00">2026-08-25</time></div></div></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/posts/2ec898f2/" title="MySQL(一)入门路线"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/mysql-course-cover.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="MySQL(一)入门路线"/></a><div class="content"><a class="title" href="/posts/2ec898f2/" title="MySQL(一)入门路线">MySQL(一)入门路线</a><time datetime="2026-08-25T05:18:42.000Z" title="发表于 2026-08-25 13:18:42">2026-08-25</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/posts/1480bf96/" title="Python(一)入门路线"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/python-course-cover.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Python(一)入门路线"/></a><div class="content"><a class="title" href="/posts/1480bf96/" title="Python(一)入门路线">Python(一)入门路线</a><time datetime="2026-08-25T05:13:45.000Z" title="发表于 2026-08-25 13:13:45">2026-08-25</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/posts/347ce4f2/" title="计算机网络(一)入门路线"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/computer-network-course-cover.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="计算机网络(一)入门路线"/></a><div class="content"><a class="title" href="/posts/347ce4f2/" title="计算机网络(一)入门路线">计算机网络(一)入门路线</a><time datetime="2026-08-24T19:38:27.000Z" title="发表于 2026-08-25 03:38:27">2026-08-25</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/posts/89ce5b85/" title="Linux(一)入门路线"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/linux-course-cover.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Linux(一)入门路线"/></a><div class="content"><a class="title" href="/posts/89ce5b85/" title="Linux(一)入门路线">Linux(一)入门路线</a><time datetime="2026-08-24T16:00:00.000Z" title="发表于 2026-08-25 00:00:00">2026-08-25</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/posts/5ce76fb/" title="Playwright(一)入门路线"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/playwright-course-cover.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Playwright(一)入门路线"/></a><div class="content"><a class="title" href="/posts/5ce76fb/" title="Playwright(一)入门路线">Playwright(一)入门路线</a><time datetime="2026-08-24T04:12:00.000Z" title="发表于 2026-08-24 12:12:00">2026-08-24</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By 𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮</span></div><div class="footer_custom_text"><div style="font-size: 14px; line-height: 1.6; color: #666; margin-bottom: 20px;">
-  <p><strong>免责声明</strong></p>
-  <p>本站发布的内容仅供学习和研究使用，禁止用于商业或非法用途。若因违规使用导致任何后果，均由用户自行承担。</p>
-  <p>请在下载后24小时内彻底删除相关文件。访问即表示您同意本声明条款。</p>
-  <p>部分资源来自互联网，如有侵权或不妥之处，请联系站长处理。</p>
-</div>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://koco-co.github.io">𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://koco-co.github.io/posts/89ce5b85/">https://koco-co.github.io/posts/89ce5b85/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://koco-co.github.io" target="_blank">𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮'𝓼 𝓦𝓸𝓻𝓴𝓢𝓹𝓪𝓬𝓮</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Linux/">Linux</a><a class="post-meta__tags" href="/tags/%E5%AD%A6%E4%B9%A0%E8%B7%AF%E7%BA%BF/">学习路线</a></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞助</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechat.jpeg" target="_blank"><img class="post-qr-code-img" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/wechat.jpeg"/></a><div class="post-qr-code-desc"></div></li><li class="reward-item"><a href="/img/alipay.jpeg" target="_blank"><img class="post-qr-code-img" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/alipay.jpeg"/></a><div class="post-qr-code-desc"></div></li></ul></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/posts/6153b09f/" title="Linux(二)系统与命令行基础"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/linux-course-cover.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Linux(二)系统与命令行基础</div></div><div class="info-2"><div class="info-item-1">掌握 Linux 系统组成、目录层级、Shell、环境变量、命令解析和帮助系统。</div></div></div></a><a class="pagination-related" href="/posts/e25e16df/" title="计算机网络(九)综合实战"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/computer-network-course-cover.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">计算机网络(九)综合实战</div></div><div class="info-2"><div class="info-item-1">用两条完整访问链路和可控失败场景整合 DNS、TCP、TLS、HTTP、QUIC、HTTP/3 与状态码证据，完成面试式网络分析。</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/posts/9efa11cb/" title="Linux(十二)进阶路线"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/linux-course-cover.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-03-21</div><div class="info-item-2">Linux(十二)进阶路线</div></div><div class="info-2"><div class="info-item-1">按可移植性、隔离资源、深度观测、启动恢复、网络、存储与安全选择有边界的进阶方向。</div></div></div></a><a class="pagination-related" href="/posts/5a63b164/" title="Linux(六)用户权限与软件管理"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/linux-course-cover.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-03-15</div><div class="info-item-2">Linux(六)用户权限与软件管理</div></div><div class="info-2"><div class="info-item-1">用身份、路径权限与包生命周期解释访问失败，并安全选择 sudo、APT/dpkg 与跨发行版工具。</div></div></div></a><a class="pagination-related" href="/posts/5297e207/" title="Linux(三)文件与存储管理"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/linux-course-cover.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-03-12</div><div class="info-item-2">Linux(三)文件与存储管理</div></div><div class="info-2"><div class="info-item-1">理解 Linux 文件模型并安全完成文件、链接、归档、挂载和容量分析。</div></div></div></a><a class="pagination-related" href="/posts/997240e7/" title="Linux(十)性能分析与资源诊断"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/linux-course-cover.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-03-19</div><div class="info-item-2">Linux(十)性能分析与资源诊断</div></div><div class="info-2"><div class="info-item-1">用同一时间窗的 CPU、内存、I/O、进程与系统调用证据定位性能瓶颈。</div></div></div></a><a class="pagination-related" href="/posts/6153b09f/" title="Linux(二)系统与命令行基础"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/linux-course-cover.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-03-11</div><div class="info-item-2">Linux(二)系统与命令行基础</div></div><div class="info-2"><div class="info-item-1">掌握 Linux 系统组成、目录层级、Shell、环境变量、命令解析和帮助系统。</div></div></div></a><a class="pagination-related" href="/posts/496664b1/" title="Linux(十一)Bash 脚本与任务自动化"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/linux-course-cover.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-03-20</div><div class="info-item-2">Linux(十一)Bash 脚本与任务自动化</div></div><div class="info-2"><div class="info-item-1">把交互式命令写成输入明确、状态可见、可清理且可重复验证的 Bash 脚本。</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/sisyphus-vale-avatar.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮</div><div class="author-info-description">身如柳絮随风扬 无论云泥意贯一</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">232</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">157</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">23</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/koco-co"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons"><a class="social-icon" href="mailto:kopohub@gmail.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a><a class="social-icon" href="https://v.douyin.com/uk6DHVS-OrI" target="_blank" title="TikTok"><i class="fab fa-tiktok"></i></a><a class="social-icon" href="https://space.bilibili.com/3546823172033014" target="_blank" title="Bilibili"><i class="fas fa-tv"></i></a><a class="social-icon" href="https://x.com/SugerQvQ" target="_blank" title="X"><i class="fab fa-x-twitter"></i></a><a class="social-icon" href="https://steamcommunity.com/profiles/76561199483116375/" target="_blank" title="Steam"><i class="fab fa-steam"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">欢迎来到 Sisyphus Vale。这里记录技术实践、系统学习与日常思考。</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AF%BE%E7%A8%8B%E7%9B%AE%E6%A0%87"><span class="toc-number">1.</span> <span class="toc-text">课程目标</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E7%BD%AE%E6%9D%A1%E4%BB%B6"><span class="toc-number">2.</span> <span class="toc-text">前置条件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AD%A6%E4%B9%A0%E8%B7%AF%E5%BE%84"><span class="toc-number">3.</span> <span class="toc-text">学习路径</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%87%E7%AB%A0%E5%AE%89%E6%8E%92"><span class="toc-number">4.</span> <span class="toc-text">文章安排</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%80%E5%A7%8B%E5%AD%A6%E4%B9%A0"><span class="toc-number">5.</span> <span class="toc-text">开始学习</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-number">6.</span> <span class="toc-text">参考资料</span></a></li></ol></div></div><div class="card-widget card-post-series"><div class="item-headline"><i class="fa-solid fa-layer-group"></i><span>系列文章</span></div><div class="aside-list"><div class="aside-list-item"><div class="content"><a class="title" href="/posts/c0dffe07/" title="Linux(十三)综合实战">Linux(十三)综合实战</a><time datetime="2026-03-21T16:00:00.000Z" title="发表于 2026-03-22 00:00:00">2026-03-22</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/9efa11cb/" title="Linux(十二)进阶路线">Linux(十二)进阶路线</a><time datetime="2026-03-20T16:00:00.000Z" title="发表于 2026-03-21 00:00:00">2026-03-21</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/496664b1/" title="Linux(十一)Bash 脚本与任务自动化">Linux(十一)Bash 脚本与任务自动化</a><time datetime="2026-03-19T16:00:00.000Z" title="发表于 2026-03-20 00:00:00">2026-03-20</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/997240e7/" title="Linux(十)性能分析与资源诊断">Linux(十)性能分析与资源诊断</a><time datetime="2026-03-18T16:00:00.000Z" title="发表于 2026-03-19 00:00:00">2026-03-19</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/cade4656/" title="Linux(九)日志查看与故障定位">Linux(九)日志查看与故障定位</a><time datetime="2026-03-17T16:00:00.000Z" title="发表于 2026-03-18 00:00:00">2026-03-18</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/3a757ef9/" title="Linux(八)网络连接与远程排障">Linux(八)网络连接与远程排障</a><time datetime="2026-03-16T16:00:00.000Z" title="发表于 2026-03-17 00:00:00">2026-03-17</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/23ca1872/" title="Linux(七)进程任务与服务管理">Linux(七)进程任务与服务管理</a><time datetime="2026-03-15T16:00:00.000Z" title="发表于 2026-03-16 00:00:00">2026-03-16</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/5a63b164/" title="Linux(六)用户权限与软件管理">Linux(六)用户权限与软件管理</a><time datetime="2026-03-14T16:00:00.000Z" title="发表于 2026-03-15 00:00:00">2026-03-15</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/72c1404c/" title="Linux(五)Shell 语法与命令组合">Linux(五)Shell 语法与命令组合</a><time datetime="2026-03-13T16:00:00.000Z" title="发表于 2026-03-14 00:00:00">2026-03-14</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/33859692/" title="Linux(四)文本处理与数据提取">Linux(四)文本处理与数据提取</a><time datetime="2026-03-12T16:00:00.000Z" title="发表于 2026-03-13 00:00:00">2026-03-13</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/5297e207/" title="Linux(三)文件与存储管理">Linux(三)文件与存储管理</a><time datetime="2026-03-11T16:00:00.000Z" title="发表于 2026-03-12 00:00:00">2026-03-12</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/6153b09f/" title="Linux(二)系统与命令行基础">Linux(二)系统与命令行基础</a><time datetime="2026-03-10T16:00:00.000Z" title="发表于 2026-03-11 00:00:00">2026-03-11</time></div></div><div class="aside-list-item"><div class="content"><a class="title" href="/posts/89ce5b85/" title="Linux(一)入门路线">Linux(一)入门路线</a><time datetime="2026-03-09T16:00:00.000Z" title="发表于 2026-03-10 00:00:00">2026-03-10</time></div></div></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/posts/df8a8a9e/" title="AI 编程工作流插件选型指南"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/%E6%96%87%E7%AB%A0%E9%9A%8F%E6%9C%BA%E5%B0%81%E9%9D%A203.webp" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="AI 编程工作流插件选型指南"/></a><div class="content"><a class="title" href="/posts/df8a8a9e/" title="AI 编程工作流插件选型指南">AI 编程工作流插件选型指南</a><time datetime="2026-08-27T08:24:15.000Z" title="发表于 2026-08-27 16:24:15">2026-08-27</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/posts/18a17ffa/" title="AI 辅助测试(十二)项目实战"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/ai-assisted-testing-course-cover.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="AI 辅助测试(十二)项目实战"/></a><div class="content"><a class="title" href="/posts/18a17ffa/" title="AI 辅助测试(十二)项目实战">AI 辅助测试(十二)项目实战</a><time datetime="2026-08-20T04:00:00.000Z" title="发表于 2026-08-20 12:00:00">2026-08-20</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/posts/f5e80d23/" title="AI 辅助测试(十一)CI流水线"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/ai-assisted-testing-course-cover.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="AI 辅助测试(十一)CI流水线"/></a><div class="content"><a class="title" href="/posts/f5e80d23/" title="AI 辅助测试(十一)CI流水线">AI 辅助测试(十一)CI流水线</a><time datetime="2026-08-19T16:00:00.000Z" title="发表于 2026-08-20 00:00:00">2026-08-20</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/posts/ca1f50ce/" title="AI 辅助测试(十)测试资产验收"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/ai-assisted-testing-course-cover.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="AI 辅助测试(十)测试资产验收"/></a><div class="content"><a class="title" href="/posts/ca1f50ce/" title="AI 辅助测试(十)测试资产验收">AI 辅助测试(十)测试资产验收</a><time datetime="2026-08-19T04:00:00.000Z" title="发表于 2026-08-19 12:00:00">2026-08-19</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/posts/6c305e52/" title="AI 辅助测试(九)缺陷分析与维护"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/picgo-images/ai-assisted-testing-course-cover.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="AI 辅助测试(九)缺陷分析与维护"/></a><div class="content"><a class="title" href="/posts/6c305e52/" title="AI 辅助测试(九)缺陷分析与维护">AI 辅助测试(九)缺陷分析与维护</a><time datetime="2026-08-18T16:00:00.000Z" title="发表于 2026-08-19 00:00:00">2026-08-19</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By 𝓢𝓲𝓼𝔂𝓹𝓱𝓾𝓼 𝓥𝓪𝓵𝓮</span></div><div class="footer_custom_text"><p>本站内容仅供学习与研究使用。部分资料来自互联网，如有侵权或不妥，请联系处理。</p>
+<p><a target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> · <a target="_blank" rel="noopener" href="https://butterfly.js.org/">Butterfly</a> · <a target="_blank" rel="noopener" href="https://github.com/koco-co/hexo-blog">站点源码</a> · <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a></p></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.7.0"></script><script src="/js/main.js?v=5.7.0"></script><script src="/js/tw_cn.js?v=5.7.0"></script><script src="/vendor/butterfly/lazyload/lazyload.iife.min.js"></script><div class="js-pjax"><script>(() => {
+  const parseViewBox = viewBox => {
+    if (!viewBox) return null
+    const parts = viewBox.trim().split(/[\s,]+/).map(n => Number(n))
+    if (parts.length !== 4 || parts.some(n => Number.isNaN(n))) return null
+    return parts
+  }
 
-<div style="text-align: center; font-size: 13px; color: #888; margin-top: 15px;">
-  <a target="_blank" href="https://hexo.io/"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://img.shields.io/badge/Frame-Hexo-blue?style=flat&logo=hexo" title="博客框架为Hexo"></a>&nbsp;
-  <a target="_blank" href="https://butterfly.js.org/"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://img.shields.io/badge/Theme-Butterfly-6513df?style=flat&logo=bitdefender" title="主题采用Butterfly"></a>&nbsp;
-  <a target="_blank" href="https://www.jsdelivr.com/"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://img.shields.io/badge/CDN-jsDelivr-5a46a4?style=flat&logo=jsdelivr" title="本站使用jsDelivr为静态资源提供CDN加速"></a>&nbsp;
-  <a target="_blank" href="https://github.com/"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://img.shields.io/badge/Source-Github-d021d6?style=flat&logo=GitHub" title="本站项目由GitHub托管"></a>&nbsp;
-  <a target="_blank" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://img.shields.io/badge/Copyright-BY--NC--SA%204.0-d42328?style=flat&logo=Claris" title="本站采用知识共享署名-非商业性使用-相同方式共享4.0国际许可协议进行许可"></a>
-</div></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button><button id="go-down" type="button" title="直达底部" onclick="btf.scrollToDest(document.body.scrollHeight, 500)"><i class="fas fa-arrow-down"></i></button></div></div><div><script src="/js/utils.js?v=5.5.3"></script><script src="/js/main.js?v=5.5.3"></script><script src="/js/tw_cn.js?v=5.5.3"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload@19.1.3/dist/lazyload.iife.min.js"></script><div class="js-pjax"><script>(() => {
+  const getSvgViewBox = svg => {
+    const attr = parseViewBox(svg.getAttribute('viewBox'))
+    if (attr) return attr
+
+    // Fallback: use bbox to build a viewBox
+    try {
+      const bbox = svg.getBBox()
+      if (bbox && bbox.width && bbox.height) return [bbox.x, bbox.y, bbox.width, bbox.height]
+    } catch (e) {
+      // getBBox may fail on some edge cases; ignore
+    }
+
+    const w = Number(svg.getAttribute('width')) || 0
+    const h = Number(svg.getAttribute('height')) || 0
+    if (w > 0 && h > 0) return [0, 0, w, h]
+    return [0, 0, 100, 100]
+  }
+
+  const setSvgViewBox = (svg, vb) => {
+    svg.setAttribute('viewBox', `${vb[0]} ${vb[1]} ${vb[2]} ${vb[3]}`)
+  }
+
+  const clamp = (v, min, max) => Math.max(min, Math.min(max, v))
+
+  const openSvgInNewTab = ({ source, initViewBox }) => {
+    const getClonedSvg = () => {
+      if (typeof source === 'string') {
+        const template = document.createElement('template')
+        template.innerHTML = source.trim()
+        const svg = template.content.querySelector('svg')
+        return svg ? svg.cloneNode(true) : null
+      }
+      if (source && typeof source.cloneNode === 'function') {
+        return source.cloneNode(true)
+      }
+      return null
+    }
+
+    const clone = getClonedSvg()
+    if (!clone) return
+    if (initViewBox && initViewBox.length === 4) {
+      clone.setAttribute('viewBox', initViewBox.join(' '))
+    }
+    if (!clone.getAttribute('xmlns')) clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+    if (!clone.getAttribute('xmlns:xlink') && clone.innerHTML.includes('xlink:')) {
+      clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink')
+    }
+    // inject background to match current theme
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
+    const bg = getComputedStyle(document.body).backgroundColor || (isDark ? '#1e1e1e' : '#ffffff')
+    if (!clone.style.background) clone.style.background = bg
+
+    const serializer = new XMLSerializer()
+    const svgSource = serializer.serializeToString(clone)
+    const htmlSource = `<!doctype html><html><head><meta charset="utf-8" />
+      <style>
+        html, body { width: 100%; height: 100%; margin: 0; display: flex; align-items: center; justify-content: center; background: ${bg}; }
+        svg { max-width: 100%; max-height: 100%; height: auto; width: auto; }
+      </style>
+      </head><body>${svgSource}</body></html>`
+    const blob = new Blob([htmlSource], { type: 'text/html;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    window.open(url, '_blank', 'noopener')
+
+    setTimeout(() => URL.revokeObjectURL(url), 5000)
+  }
+
+  const attachMermaidViewerButton = wrap => {
+    let btn = wrap.querySelector('.mermaid-open-btn')
+    if (!btn) {
+      btn = document.createElement('button')
+      btn.type = 'button'
+      btn.className = 'mermaid-open-btn'
+      wrap.appendChild(btn)
+    }
+
+    btn.innerHTML = '<i class="fa fa-search fa-fw" aria-hidden="true"></i>'
+
+    if (!btn.__mermaidViewerBound) {
+      btn.addEventListener('click', e => {
+        e.preventDefault()
+        e.stopPropagation()
+        const svg = wrap.__mermaidOriginalSvg || wrap.querySelector('svg')
+        if (!svg) return
+        const initViewBox = wrap.__mermaidInitViewBox
+        openSvgInNewTab({ source: svg, initViewBox })
+      })
+      btn.__mermaidViewerBound = true
+    }
+  }
+
+  // Zoom around a point (px, py) in the SVG viewport (in viewBox coordinates)
+  const zoomAtPoint = (vb, factor, px, py) => {
+    const w = vb[2] * factor
+    const h = vb[3] * factor
+    const nx = px - (px - vb[0]) * factor
+    const ny = py - (py - vb[1]) * factor
+    return [nx, ny, w, h]
+  }
+
+  const initMermaidGestures = wrap => {
+    // Clean up previous event listeners and pending frames
+    if (wrap.__mermaidAbortController) {
+      wrap.__mermaidAbortController.abort()
+      if (wrap.__mermaidRafId) cancelAnimationFrame(wrap.__mermaidRafId)
+    }
+    const ac = new AbortController()
+    wrap.__mermaidAbortController = ac
+    const svg = wrap.querySelector('svg')
+    if (!svg) return
+
+    // Ensure viewBox exists so gestures always work
+    const initVb = getSvgViewBox(svg)
+    wrap.__mermaidInitViewBox = initVb
+    wrap.__mermaidCurViewBox = initVb.slice()
+    setSvgViewBox(svg, initVb)
+    // Disable default gestures to prevent scroll chaining and pinch-zoom penetration in Chrome
+    svg.style.touchAction = 'none'
+
+    // Cache BoundingClientRect, throttled on scroll to reduce reflow
+    let cachedRect = svg.getBoundingClientRect()
+    let rectDirty = false
+    const markRectDirty = () => { rectDirty = true }
+    window.addEventListener('resize', markRectDirty, { signal: ac.signal })
+    window.addEventListener('scroll', markRectDirty, { signal: ac.signal, capture: true })
+    const getRect = () => {
+      if (rectDirty) {
+        cachedRect = svg.getBoundingClientRect()
+        rectDirty = false
+      }
+      return cachedRect
+    }
+
+    // Precompute clamp bounds from initial viewBox
+    const minW = initVb[2] * 0.1
+    const maxW = initVb[2] * 10
+    const minH = initVb[3] * 0.1
+    const maxH = initVb[3] * 10
+    const clampVb = vb => {
+      const out = vb.slice()
+      out[2] = clamp(out[2], minW, maxW)
+      out[3] = clamp(out[3], minH, maxH)
+      return out
+    }
+
+    // Throttle DOM updates using requestAnimationFrame
+    let pendingVb = null
+    let rafId = null
+    const applyVb = () => {
+      if (pendingVb) {
+        wrap.__mermaidCurViewBox = pendingVb
+        setSvgViewBox(svg, pendingVb)
+        pendingVb = null
+      }
+      rafId = null
+      wrap.__mermaidRafId = null
+    }
+    const setCurVb = vb => {
+      pendingVb = clampVb(vb)
+      if (!rafId) {
+        rafId = requestAnimationFrame(applyVb)
+        wrap.__mermaidRafId = rafId
+      }
+    }
+
+    const state = {
+      pointers: new Map(),
+      startVb: null,
+      startDist: 0,
+      lastPointerX: 0,
+      lastPointerY: 0
+    }
+
+    const onPointerDown = e => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return
+      svg.setPointerCapture(e.pointerId)
+      const curVb = wrap.__mermaidCurViewBox
+      state.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+      if (state.pointers.size === 1) {
+        state.startVb = curVb.slice()
+        state.lastPointerX = e.clientX
+        state.lastPointerY = e.clientY
+      } else if (state.pointers.size === 2) {
+        const pts = [...state.pointers.values()]
+        const dx = pts[0].x - pts[1].x
+        const dy = pts[0].y - pts[1].y
+        state.startDist = Math.hypot(dx, dy)
+        state.startVb = curVb.slice()
+      }
+    }
+
+    const onPointerMove = e => {
+      if (!state.pointers.has(e.pointerId)) return
+      state.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+      const curVb = wrap.__mermaidCurViewBox
+      const rect = getRect()
+      if (state.pointers.size === 1 && state.startVb) {
+        const p = state.pointers.values().next().value
+        const dxClient = p.x - state.lastPointerX
+        const dyClient = p.y - state.lastPointerY
+        state.lastPointerX = p.x
+        state.lastPointerY = p.y
+        const dx = dxClient * (curVb[2] / rect.width)
+        const dy = dyClient * (curVb[3] / rect.height)
+        setCurVb([curVb[0] - dx, curVb[1] - dy, curVb[2], curVb[3]])
+        return
+      }
+      if (state.pointers.size === 2 && state.startVb && state.startDist > 0) {
+        const pts = [...state.pointers.values()]
+        const dx = pts[0].x - pts[1].x
+        const dy = pts[0].y - pts[1].y
+        const dist = Math.hypot(dx, dy)
+        if (!dist) return
+        const factor = state.startDist / dist
+        const cx = (pts[0].x + pts[1].x) / 2
+        const cy = (pts[0].y + pts[1].y) / 2
+        const px = curVb[0] + (cx - rect.left) * (curVb[2] / rect.width)
+        const py = curVb[1] + (cy - rect.top) * (curVb[3] / rect.height)
+        setCurVb(zoomAtPoint(state.startVb, factor, px, py))
+      }
+    }
+
+    const onPointerUpOrCancel = e => {
+      // Release PointerCapture to avoid event capture anomalies
+      if (svg.hasPointerCapture && svg.hasPointerCapture(e.pointerId)) {
+        svg.releasePointerCapture(e.pointerId)
+      }
+      state.pointers.delete(e.pointerId)
+      if (state.pointers.size === 0) {
+        state.startVb = null
+        state.startDist = 0
+      } else if (state.pointers.size === 1) {
+        const p = state.pointers.values().next().value
+        state.lastPointerX = p.x
+        state.lastPointerY = p.y
+      }
+    }
+
+    const onWheel = e => {
+      // Prevent event bubbling from triggering external scroll
+      e.preventDefault()
+      e.stopPropagation()
+      // Normalize deltaY across deltaMode (Chrome uses pixels, Safari uses lines)
+      let delta = e.deltaY
+      if (e.deltaMode === 1) delta *= 16
+      else if (e.deltaMode === 2) delta *= 400
+
+      // Continuous zoom factor: smoother than fixed 1.1/0.9 steps
+      const zoomFactor = Math.pow(1.001, delta)
+
+      const curVb = wrap.__mermaidCurViewBox
+      const rect = getRect()
+      const px = curVb[0] + (e.clientX - rect.left) * (curVb[2] / rect.width)
+      const py = curVb[1] + (e.clientY - rect.top) * (curVb[3] / rect.height)
+      setCurVb(zoomAtPoint(curVb, zoomFactor, px, py))
+    }
+
+    const onDblClick = () => {
+      const init = wrap.__mermaidInitViewBox
+      if (init) setCurVb(init)
+    }
+
+    svg.addEventListener('pointerdown', onPointerDown, { signal: ac.signal })
+    svg.addEventListener('pointermove', onPointerMove, { signal: ac.signal })
+    svg.addEventListener('pointerup', onPointerUpOrCancel, { signal: ac.signal })
+    svg.addEventListener('pointercancel', onPointerUpOrCancel, { signal: ac.signal })
+    svg.addEventListener('wheel', onWheel, { passive: false, signal: ac.signal })
+    svg.addEventListener('dblclick', onDblClick, { signal: ac.signal })
+  }
+
   const runMermaid = ele => {
     window.loadMermaid = true
     const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
-
     ele.forEach((item, index) => {
       const mermaidSrc = item.firstElementChild
-      const config = mermaidSrc.dataset.config ? JSON.parse(mermaidSrc.dataset.config) : {}
+      // Clean up event listeners before removing old SVG
+      if (item.__mermaidAbortController) {
+        item.__mermaidAbortController.abort()
+      }
+      const oldSvg = item.querySelector('svg')
+      if (oldSvg) oldSvg.remove()
+      let config = {}
+      try {
+        config = mermaidSrc.dataset.config ? JSON.parse(mermaidSrc.dataset.config) : {}
+      } catch (e) {
+        console.warn('[mermaid] failed to parse dataset.config:', e)
+      }
       if (!config.theme) {
         config.theme = theme
       }
@@ -344,18 +669,37 @@
       const mermaidID = `mermaid-${index}`
       const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
 
-      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
       const renderMermaid = svg => {
         mermaidSrc.insertAdjacentHTML('afterend', svg)
+        if (true) initMermaidGestures(item)
+        item.__mermaidOriginalSvg = svg
+        if (true) attachMermaidViewerButton(item)
       }
 
-      // mermaid v9 and v10 compatibility
-      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+      const handleError = err => {
+        console.error(`[mermaid] render failed for block #${index}:`, err)
+        const errorEl = document.createElement('div')
+        errorEl.className = 'mermaid-error'
+        errorEl.textContent = `Mermaid render error: ${err.message || err}`
+        mermaidSrc.insertAdjacentElement('afterend', errorEl)
+      }
+
+      try {
+        const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+        // mermaid v9 and v10 compatibility
+        if (typeof renderFn === 'string') {
+          renderMermaid(renderFn)
+        } else {
+          renderFn.then(({ svg }) => renderMermaid(svg)).catch(handleError)
+        }
+      } catch (err) {
+        handleError(err)
+      }
     })
   }
 
-  const codeToMermaid = () => {
-    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+  const codeToMermaid = $article => {
+    const codeMermaidEle = $article.querySelectorAll('pre > code.mermaid')
     if (codeMermaidEle.length === 0) return
 
     codeMermaidEle.forEach(ele => {
@@ -371,13 +715,16 @@
   }
 
   const loadMermaid = () => {
-    if (false) codeToMermaid()
-    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    const $article = document.getElementById('article-container')
+    if (!$article) return
+
+    if (false) codeToMermaid($article)
+    const $mermaid = $article.querySelectorAll('.mermaid-wrap')
     if ($mermaid.length === 0) return
 
     const runMermaidFn = () => runMermaid($mermaid)
     btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
-    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid@11.12.2/dist/mermaid.min.js').then(runMermaidFn)
+    window.loadMermaid ? runMermaidFn() : btf.getScript('/vendor/butterfly/mermaid/mermaid.min.js').then(runMermaidFn)
   }
 
   btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
@@ -461,7 +808,7 @@
     const chartJSEle = document.querySelectorAll('#article-container .chartjs-container')
     if (chartJSEle.length === 0) return
 
-    window.loadChartJS ? runChartJS(chartJSEle) : btf.getScript('https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js').then(() => runChartJS(chartJSEle))
+    window.loadChartJS ? runChartJS(chartJSEle) : btf.getScript('/vendor/butterfly/chartjs/chart.umd.min.js').then(() => runChartJS(chartJSEle))
   }
 
   // Listen for theme change events
@@ -472,8 +819,11 @@
 })()</script><script>(() => {
   const abcjsInit = () => {
     const abcjsFn = () => {
+      const $article = document.getElementById("article-container")
+      if (!$article || $article.querySelector(".hbe-container")) return
+
       setTimeout(() => {
-        const sheets = document.querySelectorAll(".abc-music-sheet")
+        const sheets = $article.querySelectorAll(".abc-music-sheet")
         for (let i = 0; i < sheets.length; i++) {
           const ele = sheets[i]
           if (ele.children.length > 0) continue
@@ -494,15 +844,15 @@
           const options = { ...params, responsive: "resize" }
 
           // Render the music score using ABCJS.renderAbc
-          ABCJS.renderAbc(ele, ele.innerHTML, options)
+          ABCJS.renderAbc(ele, ele.textContent, options)
         }
       }, 100)
     }
 
-    if (typeof ABCJS === "object") {
+    if (typeof ABCJS === "object" && ABCJS !== null) {
       abcjsFn()
     } else {
-      btf.getScript("https://cdn.jsdelivr.net/npm/abcjs@6.5.2/dist/abcjs-basic-min.min.js").then(abcjsFn)
+      btf.getScript("/vendor/butterfly/abcjs/abcjs-basic-min.js").then(abcjsFn)
     }
   }
 
@@ -513,86 +863,11 @@
   }
 
   btf.addGlobalFn("encrypt", abcjsInit, "abcjs")
-})()</script><script>(() => {
-  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
-  const option = {"data-mapping":"pathname","data-strict":"0","data-reactions-enabled":"1","data-emit-metadata":"0","data-input-position":"bottom","data-lang":"zh-CN"}
-
-  const getGiscusTheme = theme => theme === 'dark' ? 'https://koco-co.github.io/css/giscus-acrylic-dark.css' : 'https://koco-co.github.io/css/giscus-acrylic-light.css'
-
-  const createScriptElement = config => {
-    const ele = document.createElement('script')
-    Object.entries(config).forEach(([key, value]) => {
-      ele.setAttribute(key, value)
-    })
-    return ele
-  }
-
-  const loadGiscus = (el = document, key) => {
-    const mappingConfig = isShuoshuo
-      ? { 'data-mapping': 'specific', 'data-term': key }
-      : { 'data-mapping': (option && option['data-mapping']) || 'pathname' }
-
-    const giscusConfig = {
-      src: 'https://giscus.app/client.js',
-      'data-repo': 'koco-co/hexo-blog',
-      'data-repo-id': 'R_kgDOUCj18w',
-      'data-category-id': 'DIC_kwDOUCj1884DEGPp',
-      'data-theme': getGiscusTheme(document.documentElement.getAttribute('data-theme')),
-      'data-reactions-enabled': '1',
-      crossorigin: 'anonymous',
-      async: true,
-      ...option,
-      ...mappingConfig
-    }
-
-    const scriptElement = createScriptElement(giscusConfig)
-
-    el.querySelector('#giscus-wrap').appendChild(scriptElement)
-
-    if (isShuoshuo) {
-      window.shuoshuoComment.destroyGiscus = () => {
-        if (el.children.length) {
-          el.innerHTML = ''
-          el.classList.add('no-comment')
-        }
-      }
-    }
-  }
-
-  const changeGiscusTheme = theme => {
-    const iframe = document.querySelector('#giscus-wrap iframe')
-    if (iframe) {
-      const message = {
-        giscus: {
-          setConfig: {
-            theme: getGiscusTheme(theme)
-          }
-        }
-      }
-      iframe.contentWindow.postMessage(message, 'https://giscus.app')
-    }
-  }
-
-  btf.addGlobalFn('themeChange', changeGiscusTheme, 'giscus')
-
-  if (isShuoshuo) {
-    'Giscus' === 'Giscus'
-      ? window.shuoshuoComment = { loadComment: loadGiscus }
-      : window.loadOtherComment = loadGiscus
-    return
-  }
-
-  if ('Giscus' === 'Giscus' || !false) {
-    if (false) btf.loadComment(document.getElementById('giscus-wrap'), loadGiscus)
-    else loadGiscus()
-  } else {
-    window.loadOtherComment = loadGiscus
-  }
-})()</script></div><canvas id="universe"></canvas><script defer src="/js/universe.js"></script><script async src="//at.alicdn.com/t/c/font_5107453_kyxe7zjyy0h.js"></script><script defer src="/js/lunar.js"></script><script defer src="/js/day.js"></script><script src="https://cdn.staticfile.org/jquery/3.6.3/jquery.min.js"></script><script async data-pjax src="/js/txmap.js"></script><script src="/js/tag-heatmap.js"></script><script src="/js/post-tags-style.js"></script><script defer src="/js/flashcard-sync-nav.js"></script><div class="aplayer no-destroy" data-id="17375390739" data-server="netease" data-type="playlist" data-fixed="true" data-autoplay="true" data-lrcType="-1"> </div><script src="https://cdn.jsdelivr.net/npm/pjax@0.2.8/pjax.min.js" defer="defer"></script><script>document.addEventListener('DOMContentLoaded', () => {
-  const pjaxSelectors = ["meta[property=\"og:image\"]","meta[property=\"og:title\"]","meta[property=\"og:url\"]","meta[property=\"og:description\"]","link[rel=\"canonical\"]","head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+})()</script></div><canvas id="universe" aria-hidden="true"></canvas><script defer src="/js/universe.js"></script><script defer src="/js/tag-heatmap.js"></script><script defer src="/js/external-media-consent.js"></script><script defer src="/js/giscus-consent.js"></script><script defer src="/js/flashcard-sync-nav.js"></script><script src="/vendor/butterfly/pjax/pjax.min.js" defer="defer"></script><script>document.addEventListener('DOMContentLoaded', () => {
+  const pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
 
   window.pjax = new Pjax({
-    elements: 'a:not([target="_blank"])',
+    elements: 'a:not([target="_blank"]):not([data-fancybox])',
     selectors: pjaxSelectors,
     cacheBust: false,
     analytics: false,
@@ -625,8 +900,9 @@
   document.addEventListener('pjax:complete', () => {
     btf.removeGlobalFnEvent('pjaxCompleteOnce')
     document.querySelectorAll('script[data-pjax]').forEach(item => {
+      if (!item.parentNode) return
       const newScript = document.createElement('script')
-      const content = item.text || item.textContent || item.innerHTML || ""
+      const content = item.text || item.textContent || ''
       Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
       newScript.appendChild(document.createTextNode(content))
       item.parentNode.replaceChild(newScript, item)
@@ -636,10 +912,13 @@
   })
 
   document.addEventListener('pjax:error', e => {
-    if (e.request.status === 404) {
+    const responseURL = e.request && e.request.responseURL
+    if (e.request && e.request.status === 404) {
       true
         ? pjax.loadUrl('/404.html')
-        : window.location.href = e.request.responseURL
+        : responseURL && (window.location.href = responseURL)
+    } else if (responseURL) {
+      window.location.href = responseURL
     }
   })
-})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="输入关键词..." type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js?v=5.5.3"></script></div></div><!-- hexo injector body_end start --><script defer src="/flashcard-assets/ts-fsrs.umd.js"></script><script id="hfc-sync-config-data" type="application/json">{"enabled":true,"url":"https://hkqqjttiqhwfdintqxpx.supabase.co","publishableKey":"sb_publishable_BYiAsjvfObJ1Kj26-YkVeQ_x4ruAFc4"}</script><script defer src="/flashcard-assets/supabase.js"></script><script defer src="/flashcard-assets/flashcard-sync.js"></script><script defer src="/flashcard-assets/flashcard.js"></script><!-- hexo injector body_end end --></body></html>
+})</script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="输入关键词..." type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js?v=5.7.0"></script></div></div><!-- hexo injector body_end start --><script defer src="/flashcard-assets/ts-fsrs.umd.js"></script><script defer src="/flashcard-assets/flashcard-queue.js"></script><script id="hfc-sync-config-data" type="application/json">{"enabled":true,"url":"https://hkqqjttiqhwfdintqxpx.supabase.co","publishableKey":"sb_publishable_BYiAsjvfObJ1Kj26-YkVeQ_x4ruAFc4"}</script><script defer src="/flashcard-assets/supabase.js"></script><script defer src="/flashcard-assets/flashcard-sync.js"></script><script defer src="/flashcard-assets/flashcard.js"></script><!-- hexo injector body_end end --></body></html>
